@@ -18,7 +18,6 @@ implements OnPreparedListener {
 		setContentView(R.layout.activity_main);
 		
 		//Bind button click to playMP3()
-		
 		Button button = (Button) findViewById(R.id.btnPlay);
 		button.setOnClickListener(new OnClickListener() {
 			
@@ -33,7 +32,7 @@ implements OnPreparedListener {
 		try {
 			MediaPlayer mp =
 			  MediaPlayer.create(this,
-					R.sounds.sandstorm);
+					R.raw.sandstorm);
 			// MediaPlayer mp = new MediaPlayer();
 			// mp.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()+"/serenity.mp3");
 			mp.setOnPreparedListener(this);
