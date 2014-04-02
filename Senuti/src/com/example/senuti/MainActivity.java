@@ -11,6 +11,7 @@ import android.widget.Button;
 public class MainActivity extends Activity 
 implements OnPreparedListener {
 
+	public MediaPlayer mp;
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -19,21 +20,36 @@ implements OnPreparedListener {
 		
 		//Bind button click to playMP3()
 		
-		Button button = (Button) findViewById(R.id.btnPlay);
-		button.setOnClickListener(new OnClickListener() {
+		Button playButton = (Button) findViewById(R.id.btnPlay);
+		playButton.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
 				playMP3();
 			}
 		});
+		
+		Button stopButton = (Button) findViewById(R.id.btnStop);
+		stopButton.setOnClickListener(new OnClickListener(){
+
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				mp.stop();
+			}
+			
+		});
 	}
 
 	private void playMP3() {
+		if(mp.isPlaying())
+			return;
+		else
 		try {
-			MediaPlayer mp =
-			  MediaPlayer.create(this,
-					R.sounds.sandstorm);
+			mp =
+					  MediaPlayer.create(this,
+							R.raw.sandstorm);
+			
 			// MediaPlayer mp = new MediaPlayer();
 			// mp.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()+"/serenity.mp3");
 			mp.setOnPreparedListener(this);
