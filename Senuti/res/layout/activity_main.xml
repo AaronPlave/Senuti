@@ -10,14 +10,14 @@
     android:orientation = "vertical">
 
     <Button
-        android:id="btnPlay"
+        android:id="@+id/btnPlay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
       	android:text = "@string/play_button"
         />
 
     <Button
-        android:id="btnStop"
+        android:id="@+id/btnStop"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="61dp"
