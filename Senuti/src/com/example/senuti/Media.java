@@ -23,28 +23,33 @@ public class Media extends Activity {
 		// start a new thread for audio processing
 		t = new Thread() {
 			public void run() {
+				Log.d("TAG_ACTIVITY", "Starting ");
 				// set process priority
 				setPriority(Thread.MAX_PRIORITY);
+				Log.d("TAG_ACTIVITY", "1");
 				int buffsize = AudioTrack.getMinBufferSize(sr,
 						AudioFormat.CHANNEL_OUT_MONO,
 						AudioFormat.ENCODING_PCM_16BIT);
 				// create an audiotrack obj
+				Log.d("TAG_ACTIVITY", "2");
 				AudioTrack audiotrack = new AudioTrack(
 						AudioManager.STREAM_MUSIC, sr,
 						AudioFormat.CHANNEL_OUT_STEREO,
 						AudioFormat.ENCODING_PCM_16BIT, buffsize,
 						AudioTrack.MODE_STREAM);
+				Log.d("TAG_ACTIVITY", "3");
 
 				if (audiotrack == null) {
 					Log.d("TAG_ACTIVITY", "audio track not initialized");
 				}
+				Log.d("TAG_ACTIVITY", "2");
 
 				int count = 512 * 1024; // 512 kb
 
 				// TODO: get rid of hardcoded filepath
 				String filePath = Environment.getExternalStorageDirectory()
 						.getAbsolutePath() + "/goat.wav";
-
+				Log.d("TAG_ACTIVITY", "1");
 				// Read in the file by bytes
 				byte[] byteData = null;
 				File file = null;

@@ -24,7 +24,8 @@ public final class R {
         public static final int ic_launcher=0x7f020000;
     }
     public static final class id {
-        public static final int action_settings=0x7f090003;
+        public static final int action_settings=0x7f090004;
+        public static final int btnAT=0x7f090003;
         public static final int btnPlay=0x7f090001;
         public static final int btnStop=0x7f090002;
         public static final int frequency=0x7f090000;
@@ -38,10 +39,12 @@ public final class R {
     public static final class raw {
         public static final int goat=0x7f040000;
         public static final int sandstorm=0x7f040001;
+        public static final int test=0x7f040002;
     }
     public static final class string {
         public static final int action_settings=0x7f060001;
         public static final int app_name=0x7f060000;
+        public static final int at_button=0x7f060004;
         public static final int play_button=0x7f060002;
         public static final int stop_button=0x7f060003;
     }
