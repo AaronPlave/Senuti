@@ -2,37 +2,104 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:orientation = "vertical">
-
-    <SeekBar
-        android:id="@+id/frequency"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        tools:context=".MainActivity" />
+    android:weightSum="30" >
 
     <Button
-        android:id="@+id/btnPlay"
-        android:layout_width="match_parent"
+        android:id="@+id/btnAT" 
+        android:layout_width="267dp"
         android:layout_height="wrap_content"
-      	android:text = "@string/play_button"
-        />
-
-    <Button
-        android:id="@+id/btnStop"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="61dp"
-        android:text="@string/stop_button" />
-    
-    <Button
-        android:id="@+id/btnAT"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="61dp"
         android:text="@string/at_button" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="9"
+        android:orientation="horizontal"
+        android:weightSum="30" >
+
+        <Button
+            android:id="@+id/btnPlay1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/play_button" />
+
+        <Button
+            android:id="@+id/btnPlay2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="61dp"
+            android:text="@string/stop_button" />
+
+        <Button
+            android:id="@+id/btnPlay3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/play_button" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="9"
+        android:orientation="horizontal"
+        android:weightSum="30" >
+
+        <Button
+            android:id="@+id/btnPlay4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/play_button" />
+
+        <Button
+            android:id="@+id/btnPlay5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/play_button" />
+
+        <Button
+            android:id="@+id/btnPlay6"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/play_button" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="9"
+        android:orientation="horizontal"
+        android:weightSum="30" >
+
+        <Button
+            android:id="@+id/btnPlay7"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/play_button" />
+
+        <Button
+            android:id="@+id/btnPlay8"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/play_button" />
+
+        <Button
+            android:id="@+id/btnPlay9"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/play_button" />
+    </LinearLayout>
 
 </LinearLayout>
