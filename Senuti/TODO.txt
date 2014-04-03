@@ -1,0 +1,7 @@
+TODO:
+
+Implement stop mp3
+Select song with file manager pop-up
+Figure out audio effects
+Design UI
+Create/Record sounds for synth
