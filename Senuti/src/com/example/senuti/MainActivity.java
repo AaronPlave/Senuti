@@ -6,8 +6,10 @@ import android.app.Activity;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.widget.Button;
 
 public class MainActivity extends Activity 
@@ -52,18 +54,34 @@ implements OnPreparedListener {
 		for(int i=0;i<buttons.size();i++)
 		{
 			final int j = i;
-			buttons.get(i).setOnClickListener(new OnClickListener() {
+			buttons.get(i).setOnTouchListener(new OnTouchListener() {
 				
 				@Override
-				public void onClick(View v) {
-					playMP3(mediaPlayers.get(j));
+				public boolean onTouch(View v, MotionEvent event) {
+					if(event.getAction() == MotionEvent.ACTION_DOWN)
+					{
+						playMP3(mediaPlayers.get(j));
+						return true;
+					}else
+						if(event.getAction() == MotionEvent.ACTION_UP)
+					{
+						stopMP3(mediaPlayers.get(j));
 					
-				}
-			});
+					}
+					return false;
+				}});
+		}	
+	}
+	
+	private void stopMP3(MediaPlayer mp){
+		if(mp==null)
+		{
+			
+		}else
+		{
+			if(mp.isPlaying())
+				mp.stop();
 		}
-		
-		
-		
 	}
 
 	private void playMP3(MediaPlayer mp) {
