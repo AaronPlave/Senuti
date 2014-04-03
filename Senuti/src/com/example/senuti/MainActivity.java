@@ -44,9 +44,15 @@ implements OnPreparedListener {
 	}
 
 	private void playMP3() {
-		if(mp.isPlaying())
-			return;
+		if(mp==null)
+		{
+			
+		}
 		else
+			if(mp.isPlaying())
+			{
+				return;
+			}
 		try {
 			mp =
 					  MediaPlayer.create(this,
