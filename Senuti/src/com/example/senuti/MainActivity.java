@@ -60,7 +60,12 @@ implements OnPreparedListener {
 				public boolean onTouch(View v, MotionEvent event) {
 					if(event.getAction() == MotionEvent.ACTION_DOWN)
 					{
-						playMP3(mediaPlayers.get(j));
+						int id;
+						if(j<5)
+							id = R.raw.sandstorm;
+						else
+							id = R.raw.levels;
+						playMP3(mediaPlayers.get(j),id);
 						return true;
 					}else
 						if(event.getAction() == MotionEvent.ACTION_UP)
@@ -84,20 +89,23 @@ implements OnPreparedListener {
 		}
 	}
 
-	private void playMP3(MediaPlayer mp) {
+	private void playMP3(MediaPlayer mp, int rid) {
 		if(mp==null)
 		{
 			
 		}
 		else
+			
 			if(mp.isPlaying())
 			{
 				return;
 			}
+			else
+				mp.release();
 		try {
 			mp =
 					  MediaPlayer.create(this,
-							R.raw.sandstorm);
+							rid);
 
 			// MediaPlayer mp = new MediaPlayer();
 			// mp.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()+"/serenity.mp3");
