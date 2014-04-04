@@ -6,5 +6,8 @@
     <string name="play_button">Play Sand Storm!</string>
     
     <string name="stop_button">Too Much Sand!</string>
-	<string name="at_button">Play AT song</string>
+	<string name="atPlay">Play AudioTrack Song</string>
+	<string name="atPause">Pause</string>
+	<string name="atBack">Back</string>
+	
 </resources>

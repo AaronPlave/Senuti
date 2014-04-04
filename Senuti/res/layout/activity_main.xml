@@ -9,12 +9,6 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:weightSum="30" >
 
-    <Button
-        android:id="@+id/btnAT" 
-        android:layout_width="267dp"
-        android:layout_height="wrap_content"
-        android:text="@string/at_button" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"

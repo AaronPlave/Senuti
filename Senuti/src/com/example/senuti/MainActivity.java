@@ -1,8 +1,6 @@
 package com.example.senuti;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,10 +16,8 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
 import android.widget.Button;
 
 @SuppressLint("NewApi")
@@ -34,14 +30,41 @@ public class MainActivity extends Activity implements OnPreparedListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		// setContentView(R.layout.activity_main);
 
-		// Bind atButton click to play AT file
-		Button atPlay = (Button) findViewById(R.id.btnAT);
+		setContentView(R.layout.effects_layout);
+
+		// create new instance of AudioTrackPlayer
+		final AudioTrackPlayer atp = new AudioTrackPlayer();
+
+		// Bind play AT file
+		Button atPlay = (Button) findViewById(R.id.btnAudioTrackPlay);
 		atPlay.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				playAT();
+				atp.play();
+			}
+		});
+
+		// Bind pause AT file
+		Button atPause = (Button) findViewById(R.id.btnAudioTrackPause);
+		atPause.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				atp.pause();
+			}
+		});
+
+		// Bind backtrack AT file
+		Button atBack = (Button) findViewById(R.id.btnAudioTrackBack);
+		atBack.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// TODO: Add logic to determine whether or not to go back to
+				// previous song or
+				// go to beginning of song based on where in the song you
+				// currently are.
+
 			}
 		});
 
@@ -49,49 +72,49 @@ public class MainActivity extends Activity implements OnPreparedListener {
 		mediaPlayers = new ArrayList<MediaPlayer>();
 		buttons = new ArrayList<Button>();
 
-		for (int i = 0; i < 9; i++)
-			mediaPlayers.add(new MediaPlayer());
-		Button playButton = (Button) findViewById(R.id.btnPlay1);
-		buttons.add(playButton);
-		Button playButton2 = (Button) findViewById(R.id.btnPlay2);
-		buttons.add(playButton2);
-		Button playButton3 = (Button) findViewById(R.id.btnPlay3);
-		buttons.add(playButton3);
-		Button playButton4 = (Button) findViewById(R.id.btnPlay4);
-		buttons.add(playButton4);
-		Button playButton5 = (Button) findViewById(R.id.btnPlay5);
-		buttons.add(playButton5);
-		Button playButton6 = (Button) findViewById(R.id.btnPlay6);
-		buttons.add(playButton6);
-		Button playButton7 = (Button) findViewById(R.id.btnPlay7);
-		buttons.add(playButton7);
-		Button playButton8 = (Button) findViewById(R.id.btnPlay8);
-		buttons.add(playButton8);
-		Button playButton9 = (Button) findViewById(R.id.btnPlay9);
-		buttons.add(playButton9);
-
-		for (int i = 0; i < buttons.size(); i++) {
-			final int j = i;
-			buttons.get(i).setOnTouchListener(new OnTouchListener() {
-
-				@Override
-				public boolean onTouch(View v, MotionEvent event) {
-					if (event.getAction() == MotionEvent.ACTION_DOWN) {
-						int id;
-						if (j < 5)
-							id = R.raw.sandstorm;
-						else
-							id = R.raw.levels;
-						playMP3(mediaPlayers.get(j), id);
-						return true;
-					} else if (event.getAction() == MotionEvent.ACTION_UP) {
-						stopMP3(mediaPlayers.get(j));
-
-					}
-					return false;
-				}
-			});
-		}
+		// for (int i = 0; i < 9; i++)
+		// mediaPlayers.add(new MediaPlayer());
+		// Button playButton = (Button) findViewById(R.id.btnPlay1);
+		// buttons.add(playButton);
+		// Button playButton2 = (Button) findViewById(R.id.btnPlay2);
+		// buttons.add(playButton2);
+		// Button playButton3 = (Button) findViewById(R.id.btnPlay3);
+		// buttons.add(playButton3);
+		// Button playButton4 = (Button) findViewById(R.id.btnPlay4);
+		// buttons.add(playButton4);
+		// Button playButton5 = (Button) findViewById(R.id.btnPlay5);
+		// buttons.add(playButton5);
+		// Button playButton6 = (Button) findViewById(R.id.btnPlay6);
+		// buttons.add(playButton6);
+		// Button playButton7 = (Button) findViewById(R.id.btnPlay7);
+		// buttons.add(playButton7);
+		// Button playButton8 = (Button) findViewById(R.id.btnPlay8);
+		// buttons.add(playButton8);
+		// Button playButton9 = (Button) findViewById(R.id.btnPlay9);
+		// buttons.add(playButton9);
+		//
+		// for (int i = 0; i < buttons.size(); i++) {
+		// final int j = i;
+		// buttons.get(i).setOnTouchListener(new OnTouchListener() {
+		//
+		// @Override
+		// public boolean onTouch(View v, MotionEvent event) {
+		// if (event.getAction() == MotionEvent.ACTION_DOWN) {
+		// int id;
+		// if (j < 5)
+		// id = R.raw.sandstorm;
+		// else
+		// id = R.raw.levels;
+		// playMP3(mediaPlayers.get(j), id);
+		// return true;
+		// } else if (event.getAction() == MotionEvent.ACTION_UP) {
+		// stopMP3(mediaPlayers.get(j));
+		//
+		// }
+		// return false;
+		// }
+		// });
+		// }
 	}
 
 	private void stopMP3(MediaPlayer mp) {
@@ -140,73 +163,104 @@ public class MainActivity extends Activity implements OnPreparedListener {
 		return baos.toByteArray(); // be sure to close InputStream in calling
 									// function
 	}
-	public static byte[] reverseWAV(final byte[] pArray) {
-	    if (pArray == null) {
-	      return null;
-	    }
-	    
-	    //copy the 44-byte WAV header
-	    byte[] newArray = new byte[pArray.length];
-	    for (int i = 0; i < 0; i++){
-	    	newArray[i] = pArray[i];
-	    }
-	    		
-	    int ite = 0;
-	    int frameSize = 4;
-	    //Now we assume that the file is being played in 16 bit stereo, which
-	    //means that we read 4-byte frames.
-	    int newLen = pArray.length;
-	    while (ite < newLen-44-frameSize) {
-	      byte[] frame = Arrays.copyOfRange(pArray,newLen-ite-frameSize,newLen-ite);
-	      for (int i = 0; i < frameSize; i++){
-	    	  newArray[43+ite+i] = frame[i];
-	      }
-	      ite+=frameSize;
-	    }
-	    return newArray;
-	  }
 
-	private void playAT() {
-		Thread t;
-		t = new Thread() {
+	public class AudioTrackPlayer {
+
+		// TODO: implement methods: initialize, play, pause, rewind, load,
+		// previous
+		// next, seek, destroy, status (return playing, pause, stopped,
+		// loading?)
+
+		AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, 44100,
+				AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT,
+				44100, AudioTrack.MODE_STREAM);
+
+		AudioThread audioThread;
+
+		public void play() {
+			Log.d("TAG_ACTIVITY","PLAY AUDIOTHREAD");
+			audioThread = new AudioThread();    
+			audioThread.start();
+		}
+
+		public void pause() {
+			if (!(audioThread.isPaused())){
+				audioThread.pause();
+			} else {
+				audioThread.unPause();
+			}
+			
+		}
+
+		public void rewind() {
+			return;
+		}
+
+		public void load() {
+			return;
+		}
+
+		public void previous() {
+			return;
+		}
+
+		public void next() {
+			return;
+		}
+
+		public void seek() {
+			return;
+		}
+
+		public void destroy() {
+			audioThread.clear();
+		};
+
+		private class AudioThread extends Thread {
+
+			boolean ALIVE = true;
+			boolean PLAYING = false;
+			boolean PAUSED = false;
+			boolean REVERSE = true;
+			boolean STOPPED = true;
+			int PITCHOFFSET = 0;
+			boolean CLEAR = false;
+			private byte[] newArray;
+
+			@Override
 			public void run() {
-				// int intSize =
-				// android.media.AudioTrack.getMinBufferSize(44100,
-				// AudioFormat.CHANNEL_CONFIGURATION_STEREO,
-				// AudioFormat.ENCODING_PCM_16BIT);
+				Log.d("TAG_ACTIVITY","PLAYING");
+				play();
+			}
+			
+			public void unPause() {
+				PAUSED = false;
+				PLAYING = true;
+			}
+			
+			public boolean isPaused() {
+				return PAUSED;
+			}
 
-				AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC,
-						44100, AudioFormat.CHANNEL_OUT_STEREO,
-						AudioFormat.ENCODING_PCM_16BIT, 44100,
-						AudioTrack.MODE_STREAM);
+			public void pause() {
+				PAUSED = true;
+				PLAYING = false;
+			}
 
+			public void clear() {
+				CLEAR = true;
+			}
+
+			public void play() {
+				
 				if (at == null) {
-					Log.d("TCAudio", "audio track is not initialised ");
+					Log.d("TAG_ACTIVITY", "audio track is not initialised ");
 					return;
 				}
+				Log.d("TAG_ACTIVITY","IN PLAY");
+				int count = 4; // how many bytes to be read at a time
 
-				int count = 4; // 512 kb
 				// Reading the file..
-				byte[] byteData = null;
-				File file = null;
-				String filePath = "/storage/emulated/legacy/sandstorm.wav";
-
-				// Uri url = Uri.parse("android.resource://com.example.senuti/"
-				// + R.raw.sandstorm2);
-				// File file = new File(url.getPath());
-
-				file = new File(filePath);
-				file.toString();
-
-				byteData = new byte[(int) count];
-				FileInputStream in = null;
-				try {
-					in = new FileInputStream(file);
-
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
-
 				InputStream in1 = getResources().openRawResource(
 						R.raw.sandstorm2);
 				byte[] music1 = null;
@@ -220,39 +274,12 @@ public class MainActivity extends Activity implements OnPreparedListener {
 
 				byte[] output = new byte[music1.length];
 
-				// try {
-				// byte[] music = new byte[inStream.available()];
-				// } catch (IOException e1) {
-				// // TODO Auto-generated catch block
-				// e1.printStackTrace();
-				// }
+				int bytesread = count * 2, ret = 0;
 
-				// InputStream inStream =
-				// getResources().openRawResource(R.raw.sandstorm2);
-				// byte[] byteData2 = null;
-				// try {
-				// byteData2 = new byte[inStream.available()];
-				// } catch (IOException e2) {
-				// e2.printStackTrace();
-				// }
-				// try {
-				// byteData2 = convertStreamToByteArray(inStream);
-				// } catch (IOException e1) {
-				// e1.printStackTrace();
-				// }
-				//
-				Log.d("TAG_ACTIVITY", Integer.toString(output.length)
-						+ " LENGTH");
+				// int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) *
+				// 44100);
 
-				int bytesread = count*2, ret = 0;
-				// int size = (int) file.length();
-				// int size2 = (int) byteData2.length;
-				// int pos = 0;
-
-				
-//				int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) * 44100);
-
-//				at.setPlaybackRate(playbackRate);
+				// at.setPlaybackRate(playbackRate);
 
 				// TO MIX--
 				for (int i = 44; i < output.length; i++) {
@@ -260,157 +287,69 @@ public class MainActivity extends Activity implements OnPreparedListener {
 					// btw can mix samples by just adding them together
 
 					// reduce the volume a bit:
-//					float mixed = samplef1;
-//					mixed *= 0.8;
+					// float mixed = samplef1;
+					// mixed *= 0.8;
 					// hard clipping
-//					if (mixed > 1.0f)
-//						mixed = 1.0f;
-//
-//					if (mixed < -1.0f)
-//						mixed = -1.0f;
+					// if (mixed > 1.0f)
+					// mixed = 1.0f;
+					//
+					// if (mixed < -1.0f)
+					// mixed = -1.0f;
 
 					byte outputSample = (byte) (music1[i]);
 					output[i] = outputSample;
 				}
-				
-				
-				// at.write(output, 0, output.length);
-				Log.d("TAG_ACTIVITY",  (Float.toString((int) output[0])));
-				Log.d("TAG_ACTIVITY",  (Float.toString((int) output[50])));
-//				byte[] output2 =reverseWAV(output);
-				byte[] output2 = output;
-				Log.d("TAG_ACTIVITY",  (Float.toString((int) output2[output2.length-1])));
-				Log.d("TAG_ACTIVITY",  (Float.toString((int) output2[output2.length-51])));
-				
+
 				at.play();
+				Log.d("TAG_ACTIVITY","2");
 				while (bytesread < output.length) {
-					// // try {
-					// // ret = in.read(byteData, 0, count);
-					// // } catch (IOException e) {
-					// // e.printStackTrace();
-					// // }
-					// // if (ret != -1) {
-					//
+					// now we're playing, should do necessary checks for pause,
+					// stop, rewind, modify, etc.
+
+					// case where we want to kill the song completely and stop
+					// the player
+					if (CLEAR) {
+						Log.d("TAG_ACTIVITY","CLEAR");
+						at.stop();
+						at.release();
+						return;
+					}
+
+					if (PAUSED) {
+						at.pause();
+						Log.d("TAG_ACTIVITY","PAUSED");
+						while (PAUSED) {
+							if (CLEAR) {
+								at.stop();
+								at.release();
+								return;
+							}
+							continue;
+						}
+						at.play();
+
+					}
+
 					// // Write the byte array to the track
-					// //
-					// // Log.d("TAG_ACTIVITY", Integer.toString(playbackRate)
-					// // + " playback Rate");
-//					 at.setPlaybackRate(playbackRate);
-					// //suppressed a warning about api version for copyOfRange
-//					// here
-//					Log.d("TAG_ACTIVITY", Integer.toString(output.length)
-//							+ " output length");
-//					Log.d("TAG_ACTIVITY", Integer.toString(bytesread)
-//							+ " bytes read");
-					byte[] newArray = Arrays.copyOfRange(output, output.length-bytesread,
-							output.length - bytesread + count);
-					//to reverse an array
-//					Collections.reverse(Arrays.asList(newArray));
+					 at.setPlaybackRate(44100);
+					byte[] newArray;
+					if (!REVERSE) {
+						newArray = Arrays.copyOfRange(output, output.length
+								- bytesread, output.length - bytesread + count);
+					} else {
+						newArray = Arrays.copyOfRange(output, bytesread, bytesread+count);
+					}
+
 					at.write(newArray, 0, count);
-//					playbackRate += 500;
-					// // Log.d("TAG_ACTIVITY", Integer.toString(ret));
+					// playbackRate += 500;
 					bytesread += count;
-					// // } else
-					// // break;
+
 				}
-				// try {
-				// in.close();
-				// } catch (IOException e) {
-				// // TODO Auto-generated catch block
-				// e.printStackTrace();
-				// }
 				at.stop();
+				// at.flush();
 				at.release();
 			}
 		};
-		t.start();
+
 	}
 }
-
-// protected void playAT2() {
-// Thread t;
-// Log.d("TAG_ACTIVITY", "Starting at??");
-//
-// boolean isRunning = true;
-//
-// // start a new thread for audio processing
-// t = new Thread() {
-// public void run() {
-// Log.d("TAG_ACTIVITY", "NEW THREAD");
-// // Log.d("TAG_ACTIVITY", "??");
-// int sr = 44100;
-// // set process priority
-// setPriority(Thread.MAX_PRIORITY);
-// int buffsize = AudioTrack.getMinBufferSize(sr,
-// AudioFormat.CHANNEL_OUT_MONO,
-// AudioFormat.ENCODING_PCM_8BIT);
-// // create an audiotrack obj
-// AudioTrack audiotrack = new AudioTrack(
-// AudioManager.STREAM_MUSIC, sr,
-// AudioFormat.CHANNEL_OUT_STEREO,
-// AudioFormat.ENCODING_PCM_8BIT, buffsize,
-// AudioTrack.MODE_STREAM);
-//
-// if (audiotrack == null) {
-// Log.d("TAG_ACTIVITY", "audio track not initialized");
-// }
-//
-// int count = 512; // 512 kb
-// // int count = 16 * 1024;
-// // TODO: get rid of hardcoded filepath
-// String filePath = "/storage/emulated/legacy/goat.wav";
-// // + "goat.wav";
-// Log.d("TAG_ACTIVITY", filePath);
-// // Read in the file by bytes
-// byte[] byteData = null;
-// File file = null;
-// file = new File(filePath);
-// byteData = new byte[(int) count];
-// FileInputStream in = null;
-// try {
-// in = new FileInputStream(file);
-// } catch (FileNotFoundException e) {
-// e.printStackTrace();
-// }
-//
-// int bytesread = 0;
-// int ret = 0;
-// int size = (int) file.length();
-// audiotrack.play();
-// // Log.d("TAG_ACTIVITY",size);
-// Log.d("TAG_ACTIVITY", Integer.toString(size) + " size");
-// while (bytesread < size) {
-// Log.d("TAG_ACTIVITY", Integer.toString(bytesread)
-// + " bytesread");
-// Log.d("TAG_ACTIVITY", Integer.toString(count) + " count");
-// try {
-// ret = in.read(byteData, 0, count);
-// } catch (IOException e) {
-// // TODO Auto-generated catch block
-// e.printStackTrace();
-// Log.d("TAG_ACTIVITY", "PROBLEM");
-// }
-// if (ret != -1) {
-// // write the byte array to the track
-// audiotrack.write(byteData, 0, ret);
-// bytesread += ret;
-// Log.d("TAG_ACTIVITY", Integer.toString(ret) + " ret");
-// } else {
-// break;
-// }
-// try {
-// in.close();
-// } catch (IOException e) {
-// // TODO Auto-generated catch block
-// e.printStackTrace();
-// Log.d("TAG_ACTIVITY", "PROBLEM");
-// }
-// audiotrack.stop();
-// audiotrack.release();
-// Log.d("TAG_ACTIVITY", "READING");
-// }
-//
-// }
-// };
-// t.start();
-// };

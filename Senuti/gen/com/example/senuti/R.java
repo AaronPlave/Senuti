@@ -24,20 +24,26 @@ public final class R {
         public static final int ic_launcher=0x7f020000;
     }
     public static final class id {
-        public static final int action_settings=0x7f09000a;
-        public static final int btnAT=0x7f090000;
-        public static final int btnPlay1=0x7f090001;
-        public static final int btnPlay2=0x7f090002;
-        public static final int btnPlay3=0x7f090003;
-        public static final int btnPlay4=0x7f090004;
-        public static final int btnPlay5=0x7f090005;
-        public static final int btnPlay6=0x7f090006;
-        public static final int btnPlay7=0x7f090007;
-        public static final int btnPlay8=0x7f090008;
-        public static final int btnPlay9=0x7f090009;
+        public static final int action_settings=0x7f09000f;
+        public static final int btnAudioTrackBack=0x7f090009;
+        public static final int btnAudioTrackPause=0x7f09000a;
+        public static final int btnAudioTrackPlay=0x7f09000b;
+        public static final int btnPlay1=0x7f090000;
+        public static final int btnPlay2=0x7f090001;
+        public static final int btnPlay3=0x7f090002;
+        public static final int btnPlay4=0x7f090003;
+        public static final int btnPlay5=0x7f090004;
+        public static final int btnPlay6=0x7f090005;
+        public static final int btnPlay7=0x7f090006;
+        public static final int btnPlay8=0x7f090007;
+        public static final int btnPlay9=0x7f090008;
+        public static final int radioButton1=0x7f09000e;
+        public static final int seekBar1=0x7f09000d;
+        public static final int textView1=0x7f09000c;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
+        public static final int effects_layout=0x7f030001;
     }
     public static final class menu {
         public static final int main=0x7f080000;
@@ -50,7 +56,9 @@ public final class R {
     public static final class string {
         public static final int action_settings=0x7f060001;
         public static final int app_name=0x7f060000;
-        public static final int at_button=0x7f060004;
+        public static final int atBack=0x7f060006;
+        public static final int atPause=0x7f060005;
+        public static final int atPlay=0x7f060004;
         public static final int play_button=0x7f060002;
         public static final int stop_button=0x7f060003;
     }
