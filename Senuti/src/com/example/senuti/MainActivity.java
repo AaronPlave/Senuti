@@ -8,7 +8,6 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
 
@@ -79,13 +78,16 @@ implements OnPreparedListener {
 	}
 	
 	private void stopMP3(MediaPlayer mp){
-		if(mp==null)
+		if(mp!= null)
 		{
-			
-		}else
-		{
-			if(mp.isPlaying())
-				mp.stop();
+			try{
+			mp.stop();
+			mp.release();
+			mp = new MediaPlayer();
+			}
+			catch(Exception e){
+				
+			}
 		}
 	}
 
@@ -107,8 +109,6 @@ implements OnPreparedListener {
 					  MediaPlayer.create(this,
 							rid);
 
-			// MediaPlayer mp = new MediaPlayer();
-			// mp.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()+"/serenity.mp3");
 			mp.setOnPreparedListener(this);
 			mp.prepare();
 		} catch (Exception e) {
