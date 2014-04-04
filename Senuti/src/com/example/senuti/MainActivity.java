@@ -140,6 +140,31 @@ public class MainActivity extends Activity implements OnPreparedListener {
 		return baos.toByteArray(); // be sure to close InputStream in calling
 									// function
 	}
+	public static byte[] reverseWAV(final byte[] pArray) {
+	    if (pArray == null) {
+	      return null;
+	    }
+	    
+	    //copy the 44-byte WAV header
+	    byte[] newArray = new byte[pArray.length];
+	    for (int i = 0; i < 0; i++){
+	    	newArray[i] = pArray[i];
+	    }
+	    		
+	    int ite = 0;
+	    int frameSize = 4;
+	    //Now we assume that the file is being played in 16 bit stereo, which
+	    //means that we read 4-byte frames.
+	    int newLen = pArray.length;
+	    while (ite < newLen-44-frameSize) {
+	      byte[] frame = Arrays.copyOfRange(pArray,newLen-ite-frameSize,newLen-ite);
+	      for (int i = 0; i < frameSize; i++){
+	    	  newArray[43+ite+i] = frame[i];
+	      }
+	      ite+=frameSize;
+	    }
+	    return newArray;
+	  }
 
 	private void playAT() {
 		Thread t;
@@ -160,7 +185,7 @@ public class MainActivity extends Activity implements OnPreparedListener {
 					return;
 				}
 
-				int count = 512 * 1024; // 512 kb
+				int count = 4; // 512 kb
 				// Reading the file..
 				byte[] byteData = null;
 				File file = null;
@@ -219,36 +244,45 @@ public class MainActivity extends Activity implements OnPreparedListener {
 				Log.d("TAG_ACTIVITY", Integer.toString(output.length)
 						+ " LENGTH");
 
-				int bytesread = 0, ret = 0;
+				int bytesread = count*2, ret = 0;
 				// int size = (int) file.length();
 				// int size2 = (int) byteData2.length;
 				// int pos = 0;
 
-				at.play();
-				int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) * 44100);
+				
+//				int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) * 44100);
 
-				at.setPlaybackRate(playbackRate);
+//				at.setPlaybackRate(playbackRate);
 
 				// TO MIX--
-				for (int i = 0; i < output.length; i++) {
-					float samplef1 = music1[i] / 128.0f;
+				for (int i = 44; i < output.length; i++) {
+					float samplef1 = music1[i];
 					// btw can mix samples by just adding them together
 
 					// reduce the volume a bit:
-					float mixed = samplef1;
-					mixed *= 0.8;
+//					float mixed = samplef1;
+//					mixed *= 0.8;
 					// hard clipping
-					if (mixed > 1.0f)
-						mixed = 1.0f;
+//					if (mixed > 1.0f)
+//						mixed = 1.0f;
+//
+//					if (mixed < -1.0f)
+//						mixed = -1.0f;
 
-					if (mixed < -1.0f)
-						mixed = -1.0f;
-
-					byte outputSample = (byte) (mixed * 128.0f);
+					byte outputSample = (byte) (music1[i]);
 					output[i] = outputSample;
 				}
+				
+				
 				// at.write(output, 0, output.length);
-
+				Log.d("TAG_ACTIVITY",  (Float.toString((int) output[0])));
+				Log.d("TAG_ACTIVITY",  (Float.toString((int) output[50])));
+//				byte[] output2 =reverseWAV(output);
+				byte[] output2 = output;
+				Log.d("TAG_ACTIVITY",  (Float.toString((int) output2[output2.length-1])));
+				Log.d("TAG_ACTIVITY",  (Float.toString((int) output2[output2.length-51])));
+				
+				at.play();
 				while (bytesread < output.length) {
 					// // try {
 					// // ret = in.read(byteData, 0, count);
@@ -261,17 +295,19 @@ public class MainActivity extends Activity implements OnPreparedListener {
 					// //
 					// // Log.d("TAG_ACTIVITY", Integer.toString(playbackRate)
 					// // + " playback Rate");
-					 at.setPlaybackRate(playbackRate);
+//					 at.setPlaybackRate(playbackRate);
 					// //suppressed a warning about api version for copyOfRange
-					// here
-					Log.d("TAG_ACTIVITY", Integer.toString(output.length)
-							+ " output length");
-					Log.d("TAG_ACTIVITY", Integer.toString(bytesread)
-							+ " bytes read");
-					byte[] newArray = Arrays.copyOfRange(output, bytesread,
-							bytesread + count);
+//					// here
+//					Log.d("TAG_ACTIVITY", Integer.toString(output.length)
+//							+ " output length");
+//					Log.d("TAG_ACTIVITY", Integer.toString(bytesread)
+//							+ " bytes read");
+					byte[] newArray = Arrays.copyOfRange(output, output.length-bytesread,
+							output.length - bytesread + count);
+					//to reverse an array
+//					Collections.reverse(Arrays.asList(newArray));
 					at.write(newArray, 0, count);
-					playbackRate += 500;
+//					playbackRate += 500;
 					// // Log.d("TAG_ACTIVITY", Integer.toString(ret));
 					bytesread += count;
 					// // } else
