@@ -1,18 +1,21 @@
 package com.example.senuti;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -21,6 +24,7 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
 
+@SuppressLint("NewApi")
 public class MainActivity extends Activity implements OnPreparedListener {
 
 	ArrayList<MediaPlayer> mediaPlayers;
@@ -32,7 +36,7 @@ public class MainActivity extends Activity implements OnPreparedListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-//		 Bind atButton click to play AT file
+		// Bind atButton click to play AT file
 		Button atPlay = (Button) findViewById(R.id.btnAT);
 		atPlay.setOnClickListener(new OnClickListener() {
 			@Override
@@ -124,17 +128,31 @@ public class MainActivity extends Activity implements OnPreparedListener {
 		mp.start();
 	}
 
+	public static byte[] convertStreamToByteArray(InputStream is)
+			throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] buff = new byte[10240];
+		int i = Integer.MAX_VALUE;
+		while ((i = is.read(buff, 0, buff.length)) > 0) {
+			baos.write(buff, 0, i);
+		}
+
+		return baos.toByteArray(); // be sure to close InputStream in calling
+									// function
+	}
+
 	private void playAT() {
 		Thread t;
 		t = new Thread() {
 			public void run() {
-				int intSize = android.media.AudioTrack.getMinBufferSize(44100,
-						AudioFormat.CHANNEL_CONFIGURATION_STEREO,
-						AudioFormat.ENCODING_PCM_16BIT);
+				// int intSize =
+				// android.media.AudioTrack.getMinBufferSize(44100,
+				// AudioFormat.CHANNEL_CONFIGURATION_STEREO,
+				// AudioFormat.ENCODING_PCM_16BIT);
 
 				AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC,
-						44100, AudioFormat.CHANNEL_CONFIGURATION_STEREO,
-						AudioFormat.ENCODING_PCM_16BIT, intSize,
+						44100, AudioFormat.CHANNEL_OUT_STEREO,
+						AudioFormat.ENCODING_PCM_16BIT, 44100,
 						AudioTrack.MODE_STREAM);
 
 				if (at == null) {
@@ -147,11 +165,11 @@ public class MainActivity extends Activity implements OnPreparedListener {
 				byte[] byteData = null;
 				File file = null;
 				String filePath = "/storage/emulated/legacy/sandstorm.wav";
-				
-//				Uri url = Uri.parse("android.resource://com.example.senuti/" + R.raw.sandstorm2);
-//				File file = new File(url.getPath());
-				
-				
+
+				// Uri url = Uri.parse("android.resource://com.example.senuti/"
+				// + R.raw.sandstorm2);
+				// File file = new File(url.getPath());
+
 				file = new File(filePath);
 				file.toString();
 
@@ -163,38 +181,108 @@ public class MainActivity extends Activity implements OnPreparedListener {
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				}
-				
+
+				InputStream in1 = getResources().openRawResource(
+						R.raw.sandstorm2);
+				byte[] music1 = null;
+				try {
+					music1 = new byte[in1.available()];
+					music1 = convertStreamToByteArray(in1);
+					in1.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				byte[] output = new byte[music1.length];
+
+				// try {
+				// byte[] music = new byte[inStream.available()];
+				// } catch (IOException e1) {
+				// // TODO Auto-generated catch block
+				// e1.printStackTrace();
+				// }
+
+				// InputStream inStream =
+				// getResources().openRawResource(R.raw.sandstorm2);
+				// byte[] byteData2 = null;
+				// try {
+				// byteData2 = new byte[inStream.available()];
+				// } catch (IOException e2) {
+				// e2.printStackTrace();
+				// }
+				// try {
+				// byteData2 = convertStreamToByteArray(inStream);
+				// } catch (IOException e1) {
+				// e1.printStackTrace();
+				// }
+				//
+				Log.d("TAG_ACTIVITY", Integer.toString(output.length)
+						+ " LENGTH");
+
 				int bytesread = 0, ret = 0;
-				int size = (int) file.length();
+				// int size = (int) file.length();
+				// int size2 = (int) byteData2.length;
+				// int pos = 0;
+
 				at.play();
 				int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) * 44100);
 
 				at.setPlaybackRate(playbackRate);
-				while (bytesread < size) {
-					try {
-						ret = in.read(byteData, 0, count);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					if (ret != -1) {
-						// Write the byte array to the track
-						playbackRate += 500;
-						Log.d("TAG_ACTIVITY", Integer.toString(playbackRate)
-								+ " playback Rate");
-						at.setPlaybackRate(playbackRate);
-						at.write(byteData, 0, ret);
-						Log.d("TAG_ACTIVITY", Integer.toString(ret));
-						bytesread += ret;
-					} else
-						break;
+
+				// TO MIX--
+				for (int i = 0; i < output.length; i++) {
+					float samplef1 = music1[i] / 128.0f;
+					// btw can mix samples by just adding them together
+
+					// reduce the volume a bit:
+					float mixed = samplef1;
+					mixed *= 0.8;
+					// hard clipping
+					if (mixed > 1.0f)
+						mixed = 1.0f;
+
+					if (mixed < -1.0f)
+						mixed = -1.0f;
+
+					byte outputSample = (byte) (mixed * 128.0f);
+					output[i] = outputSample;
 				}
-				try {
-					in.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				// at.write(output, 0, output.length);
+
+				while (bytesread < output.length) {
+					// // try {
+					// // ret = in.read(byteData, 0, count);
+					// // } catch (IOException e) {
+					// // e.printStackTrace();
+					// // }
+					// // if (ret != -1) {
+					//
+					// // Write the byte array to the track
+					// //
+					// // Log.d("TAG_ACTIVITY", Integer.toString(playbackRate)
+					// // + " playback Rate");
+					 at.setPlaybackRate(playbackRate);
+					// //suppressed a warning about api version for copyOfRange
+					// here
+					Log.d("TAG_ACTIVITY", Integer.toString(output.length)
+							+ " output length");
+					Log.d("TAG_ACTIVITY", Integer.toString(bytesread)
+							+ " bytes read");
+					byte[] newArray = Arrays.copyOfRange(output, bytesread,
+							bytesread + count);
+					at.write(newArray, 0, count);
+					playbackRate += 500;
+					// // Log.d("TAG_ACTIVITY", Integer.toString(ret));
+					bytesread += count;
+					// // } else
+					// // break;
 				}
+				// try {
+				// in.close();
+				// } catch (IOException e) {
+				// // TODO Auto-generated catch block
+				// e.printStackTrace();
+				// }
 				at.stop();
 				at.release();
 			}
