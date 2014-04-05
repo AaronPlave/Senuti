@@ -9,5 +9,7 @@
 	<string name="atPlay">Play AudioTrack Song</string>
 	<string name="atPause">Pause</string>
 	<string name="atBack">Back</string>
+	<string name="reverse">Reverse</string>
+	<string name="pitch_control">Pitch Control</string>
 	
 </resources>
