@@ -1,38 +1,41 @@
 package com.example.senuti;
 
+<<<<<<< HEAD
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+=======
+>>>>>>> de9083d22476e72d4d41b6d1b50fe87124f748c8
 import java.util.ArrayList;
-import java.util.Arrays;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Switch;
 
-@SuppressLint("NewApi")
-public class MainActivity extends Activity implements OnPreparedListener {
+public class MainActivity extends Activity 
+implements OnPreparedListener {
 
 	ArrayList<MediaPlayer> mediaPlayers;
 	ArrayList<Button> buttons;
+<<<<<<< HEAD
 	double sliderval;
+=======
+	
+>>>>>>> de9083d22476e72d4d41b6d1b50fe87124f748c8
 	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+<<<<<<< HEAD
 		// setContentView(R.layout.activity_main);
 
 		setContentView(R.layout.effects_layout);
@@ -115,77 +118,95 @@ public class MainActivity extends Activity implements OnPreparedListener {
 		});
 
 		// Bind button click to playMP3()
+=======
+		setContentView(R.layout.activity_main);
+		
+		//Bind button click to playMP3()
+>>>>>>> de9083d22476e72d4d41b6d1b50fe87124f748c8
 		mediaPlayers = new ArrayList<MediaPlayer>();
 		buttons = new ArrayList<Button>();
-
-		// for (int i = 0; i < 9; i++)
-		// mediaPlayers.add(new MediaPlayer());
-		// Button playButton = (Button) findViewById(R.id.btnPlay1);
-		// buttons.add(playButton);
-		// Button playButton2 = (Button) findViewById(R.id.btnPlay2);
-		// buttons.add(playButton2);
-		// Button playButton3 = (Button) findViewById(R.id.btnPlay3);
-		// buttons.add(playButton3);
-		// Button playButton4 = (Button) findViewById(R.id.btnPlay4);
-		// buttons.add(playButton4);
-		// Button playButton5 = (Button) findViewById(R.id.btnPlay5);
-		// buttons.add(playButton5);
-		// Button playButton6 = (Button) findViewById(R.id.btnPlay6);
-		// buttons.add(playButton6);
-		// Button playButton7 = (Button) findViewById(R.id.btnPlay7);
-		// buttons.add(playButton7);
-		// Button playButton8 = (Button) findViewById(R.id.btnPlay8);
-		// buttons.add(playButton8);
-		// Button playButton9 = (Button) findViewById(R.id.btnPlay9);
-		// buttons.add(playButton9);
-		//
-		// for (int i = 0; i < buttons.size(); i++) {
-		// final int j = i;
-		// buttons.get(i).setOnTouchListener(new OnTouchListener() {
-		//
-		// @Override
-		// public boolean onTouch(View v, MotionEvent event) {
-		// if (event.getAction() == MotionEvent.ACTION_DOWN) {
-		// int id;
-		// if (j < 5)
-		// id = R.raw.sandstorm;
-		// else
-		// id = R.raw.levels;
-		// playMP3(mediaPlayers.get(j), id);
-		// return true;
-		// } else if (event.getAction() == MotionEvent.ACTION_UP) {
-		// stopMP3(mediaPlayers.get(j));
-		//
-		// }
-		// return false;
-		// }
-		// });
-		// }
+		
+		for(int i=0;i<9;i++)
+			mediaPlayers.add(new MediaPlayer());
+		
+		Button playButton = (Button) findViewById(R.id.btnPlay1);
+		buttons.add(playButton);
+		Button playButton2 = (Button) findViewById(R.id.btnPlay2);
+		buttons.add(playButton2);
+		Button playButton3 = (Button) findViewById(R.id.btnPlay3);
+		buttons.add(playButton3);
+		Button playButton4 = (Button) findViewById(R.id.btnPlay4);
+		buttons.add(playButton4);
+		Button playButton5 = (Button) findViewById(R.id.btnPlay5);
+		buttons.add(playButton5);
+		Button playButton6 = (Button) findViewById(R.id.btnPlay6);
+		buttons.add(playButton6);
+		Button playButton7 = (Button) findViewById(R.id.btnPlay7);
+		buttons.add(playButton7);
+		Button playButton8 = (Button) findViewById(R.id.btnPlay8);
+		buttons.add(playButton8);
+		Button playButton9 = (Button) findViewById(R.id.btnPlay9);
+		buttons.add(playButton9);
+		
+		for(int i=0;i<buttons.size();i++)
+		{
+			final int j = i;
+			buttons.get(i).setOnTouchListener(new OnTouchListener() {
+				
+				@Override
+				public boolean onTouch(View v, MotionEvent event) {
+					if(event.getAction() == MotionEvent.ACTION_DOWN)
+					{
+						int id;
+						if(j<5)
+							id = R.raw.sandstorm;
+						else
+							id = R.raw.levels;
+						playMP3(mediaPlayers.get(j),id);
+						return true;
+					}else
+						if(event.getAction() == MotionEvent.ACTION_UP)
+					{
+						stopMP3(mediaPlayers.get(j));
+					
+					}
+					return false;
+				}});
+		}	
 	}
-
-	private void stopMP3(MediaPlayer mp) {
-		if (mp == null) {
-
-		} else {
-			if (mp.isPlaying())
-				mp.stop();
+	
+	private void stopMP3(MediaPlayer mp){
+		if(mp!= null)
+		{
+			try{
+			mp.stop();
+			mp.release();
+			mp = new MediaPlayer();
+			}
+			catch(Exception e){
+				
+			}
 		}
 	}
 
 	private void playMP3(MediaPlayer mp, int rid) {
-		if (mp == null) {
-
-		} else
-
-		if (mp.isPlaying()) {
-			return;
-		} else
-			mp.release();
+		if(mp==null)
+		{
+			
+		}
+		else
+			
+			if(mp.isPlaying())
+			{
+				return;
+			}
+			else
+				mp.release();
 		try {
-			mp = MediaPlayer.create(this, rid);
+			mp =
+					  MediaPlayer.create(this,
+							rid);
 
-			// MediaPlayer mp = new MediaPlayer();
-			// mp.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()+"/serenity.mp3");
 			mp.setOnPreparedListener(this);
 			mp.prepare();
 		} catch (Exception e) {
@@ -197,6 +218,7 @@ public class MainActivity extends Activity implements OnPreparedListener {
 		mp.start();
 	}
 
+<<<<<<< HEAD
 	public static byte[] convertStreamToByteArray(InputStream is)
 			throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -479,3 +501,6 @@ public class MainActivity extends Activity implements OnPreparedListener {
 
 	}
 }
+=======
+}
+>>>>>>> de9083d22476e72d4d41b6d1b50fe87124f748c8

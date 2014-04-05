@@ -6,10 +6,14 @@
     <string name="play_button">Play Sand Storm!</string>
     
     <string name="stop_button">Too Much Sand!</string>
+<<<<<<< HEAD
 	<string name="atPlay">Play AudioTrack Song</string>
 	<string name="atPause">Pause</string>
 	<string name="atBack">Back</string>
 	<string name="reverse">Reverse</string>
 	<string name="pitch_control">Pitch Control</string>
 	
+=======
+
+>>>>>>> de9083d22476e72d4d41b6d1b50fe87124f748c8
 </resources>
