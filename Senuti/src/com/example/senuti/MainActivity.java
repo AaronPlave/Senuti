@@ -1,19 +1,32 @@
 package com.example.senuti;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Timer;
 
+import javazoom.jl.decoder.Bitstream;
+import javazoom.jl.decoder.BitstreamException;
+import javazoom.jl.decoder.Decoder;
+import javazoom.jl.decoder.DecoderException;
+import javazoom.jl.decoder.Header;
+import javazoom.jl.decoder.SampleBuffer;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Bundle;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -110,6 +123,7 @@ public class MainActivity extends Activity implements OnPreparedListener {
 				// previous song or
 				// go to beginning of song based on where in the song you
 				// currently are.
+				atp.back();
 
 			}
 		});
@@ -244,7 +258,10 @@ public class MainActivity extends Activity implements OnPreparedListener {
 			} else {
 				audioThread.unPause();
 			}
+		}
 
+		public void back() {
+			audioThread.back();
 		}
 
 		public void setPitch(double p) {
@@ -253,10 +270,6 @@ public class MainActivity extends Activity implements OnPreparedListener {
 
 		public void setReverse(boolean r) {
 			audioThread.setReverse(r);
-		}
-
-		public void rewind() {
-			return;
 		}
 
 		public void load() {
@@ -289,24 +302,21 @@ public class MainActivity extends Activity implements OnPreparedListener {
 			int PITCHOFFSET = 0;
 			boolean CLEAR = false;
 			int position = 0;
-			boolean MAX_POSITION = false;
+			int TRACKLENGTH;
 
 			int count = 16; // how many bytes to be read at a time
-			// TODO: maybe read in 16 bytes and then split up into 4 byte
-			// sections.
-			// The more you read in at a time backwards, the worse it sounds, so
-			// try to reduce this.
-			// However, with a low count like 4, the OS can't really handle
-			// higher playback rates because it
-			// can't keep up with all of those reads. Is the solution to read 16
-			// and reverse the frames?
 
 			private byte[] newArray;
 
 			@Override
 			public void run() {
 				Log.d("TAG_ACTIVITY", "PLAYING");
-				play();
+				try {
+					play();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
 			double MAX_OFFSET = 48000.0;
@@ -332,6 +342,23 @@ public class MainActivity extends Activity implements OnPreparedListener {
 
 			public boolean isPaused() {
 				return PAUSED;
+			}
+
+			public void back() {
+				
+				boolean wasPaused = audioThread.PAUSED;
+				PAUSED = true;
+				at.stop();
+				at.flush();
+				// if reversed, set to end of song, else set to beginning
+				if (REVERSE) {
+					audioThread.position = audioThread.TRACKLENGTH - count;
+				} else {
+					audioThread.position = 0;
+				}
+//				
+				at.play();
+				PAUSED = wasPaused;
 			}
 
 			public void pause() {
@@ -383,8 +410,75 @@ public class MainActivity extends Activity implements OnPreparedListener {
 					audio[i] = output;
 				}
 			}
+			
+//			MediaFormat format = new MediaFormat();
+			
+			
+//			MediaCodec mediaCodec = MediaCodec.createByCodecName(MediaFormat.KEY_MIME)
+			
+//			public byte[] decode2() throws IOException{
+////				AssetFileDescriptor fd = getAssets().openFd(R.raw.warmwater);
+//				MediaExtractor extractor = new MediaExtractor();
+//				FileInputStream in3 = (FileInputStream) getResources().openRawResource(
+//						R.raw.warmwater);
+//				in3.getFD();
+//				in3.
+////				extractor.setDataSource(in3);
+//			}
+			
+			public byte[] decode(InputStream inputStream, int startMs, int maxMs) throws IOException {
+		        ByteArrayOutputStream outStream = new ByteArrayOutputStream(1024);
 
-			public void play() {
+		        float totalMs = 0;
+		        boolean seeking = true;
+
+		        try {
+		            Bitstream bitstream = new Bitstream(inputStream);
+		            Decoder decoder = new Decoder();
+
+		            boolean done = false;
+		            while (!done) {
+		                Header frameHeader = bitstream.readFrame();
+		                if (frameHeader == null) {
+		                    done = true;
+		                } else {
+		                    totalMs += frameHeader.ms_per_frame();
+
+		                    if (totalMs >= startMs) {
+		                        seeking = false;
+		                    }
+
+		                    if (!seeking) {
+		                        // logger.debug("Handling header: " + frameHeader.layer_string());
+		                        SampleBuffer output = (SampleBuffer) decoder.decodeFrame(frameHeader, bitstream);
+
+		                        if (output.getSampleFrequency() != 44100 || output.getChannelCount() != 2) {
+		                            throw new IllegalArgumentException("mono or non-44100 MP3 not supported");
+		                        }
+
+		                        short[] pcm = output.getBuffer();
+		                        for (short s : pcm) {
+		                            outStream.write(s & 0xff);
+		                            outStream.write((s >> 8) & 0xff);
+		                        }
+		                    }
+
+		                    if (totalMs >= (startMs + maxMs)) {
+		                        done = true;
+		                    }
+		                }
+		                bitstream.closeFrame();
+		            }
+
+		            return outStream.toByteArray();
+		        } catch (BitstreamException e) {
+		            throw new IOException("Bitstream error: " + e);
+		        } catch (DecoderException e) {
+		            throw new IOException("Decoder error: " + e);
+		        }
+		    }
+
+			public void play() throws IOException {
 
 				if (at == null) {
 					Log.d("TAG_ACTIVITY", "audio track is not initialised ");
@@ -394,7 +488,7 @@ public class MainActivity extends Activity implements OnPreparedListener {
 
 				// Reading the file..
 				InputStream in1 = getResources().openRawResource(
-						R.raw.sandstorm2);
+						R.raw.warmwater);
 				byte[] music1 = null;
 				try {
 					music1 = new byte[in1.available()];
@@ -403,13 +497,38 @@ public class MainActivity extends Activity implements OnPreparedListener {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-
+				
+				
+				InputStream data = getResources().openRawResource(
+						R.raw.warmwater2);
+				
+				long start = System.currentTimeMillis();
+				byte[] output2 = decode(data, 0, Integer.MAX_VALUE);
+				long end = System.currentTimeMillis();
+				long total = (end-start)/1000;
+				Log.d("TAG_ACTIVITY","DECODING TIME = "+ Long.toString(total));
+				
+//				}
+				
+				Log.d("TAG_ACTIVITY",Integer.toString(music1.length)+" o.length");
+				Log.d("TAG_ACTIVITY",Integer.toString(output2.length)+" o2.length");
+//				TODO: Run decode on only a portion of the song so that playback can begin instantly
+				// Then, get the rest (on a separate thread?) and feed back somehow or maybe write 
+				// to a file? Probably not the file. This does make seeking much harder/impossible 
+				// while the song is being decoded, but could just only let you seek up to the place
+				// where the buffer has loaded? That could work. 
+				
+				//TODO: Use a thread in the background prepare the next song.	
+				
 				byte[] output = new byte[music1.length];
+				
+				output = output2;
+				TRACKLENGTH = output.length;
 
+				
 				// TO MIX--
-
-				for (int i = 44; i < output.length; i++) {
-					float samplef1 = music1[i];
+//				for (int i = 0; i < output.length; i++) {
+//					float samplef1 = music1[i];
 					// btw can mix samples by just adding them together
 
 					// reduce the volume a bit:
@@ -422,9 +541,9 @@ public class MainActivity extends Activity implements OnPreparedListener {
 					// if (mixed < -1.0f)
 					// mixed = -1.0f;
 
-					byte outputSample = (byte) (music1[i]);
-					output[i] = outputSample;
-				}
+//					byte outputSample = (byte) (music1[i]);
+//					output[i] = outputSample;
+//				}
 
 				at.play();
 				Log.d("TAG_ACTIVITY", "2");
@@ -432,18 +551,7 @@ public class MainActivity extends Activity implements OnPreparedListener {
 				boolean continuePlaying = true;
 				while (continuePlaying) {
 
-					// if (position > output.length){
-					// //reached the end of the song,
-					// MAX_POSITION = true;
-					// boolean wait = true;
-					// while (wait){
-					// if (REVERSE && )
-					// }
-					//
-					// }
-					// else if (position <= 0){
-					//
-					// }
+
 					if (!(position <= output.length && position >= 0)) {
 						// reached end/beginning of song
 						PAUSED = true;
@@ -481,6 +589,13 @@ public class MainActivity extends Activity implements OnPreparedListener {
 									Log.d("TAG_ACTIVITY","UNPAUSED, going backwards");
 								} else if (position >= 0 && position <= output.length - count){
 									stayPaused = false;
+								}
+							}
+							else {
+								try {
+									Thread.sleep(100);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
 								}
 							}
 						}
