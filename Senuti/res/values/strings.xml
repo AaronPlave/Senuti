@@ -11,5 +11,6 @@
 	<string name="atBack">Back</string>
 	<string name="reverse">Reverse</string>
 	<string name="pitch_control">Pitch Control</string>
+	<string name="random">Random</string>
 
 </resources>

@@ -439,7 +439,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			int PITCHOFFSET = 0;
 			boolean CLEAR = false;
 			int position = 0;
-			int count = 16; // how many bytes to be read at a time
+			int count = 512; // how many bytes to be read at a time
 			int TRACKLENGTH;
 			
 			AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, 44100,

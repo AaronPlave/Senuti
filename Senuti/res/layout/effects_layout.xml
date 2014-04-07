@@ -65,4 +65,12 @@
         android:text="@string/pitch_control"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
+    <Button
+        android:id="@+id/btnRandom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/btnAudioTrackPlay"
+        android:text="@string/random" />
+
 </RelativeLayout>
