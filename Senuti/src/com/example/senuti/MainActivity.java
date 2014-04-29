@@ -664,7 +664,9 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				if (mp3URI == null)
 					return;
 				InputStream data = getContentResolver().openInputStream(mp3URI);
-
+				File dataFile = new File(mp3URI.toString());
+				int dataSize = (int) dataFile.length();
+				
 				Log.d("TAG_ACTIVITY", "DECODING MP3 TO WAV");
 				long start = System.currentTimeMillis();
 
@@ -676,7 +678,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				// Method to decode the data in chunks and write the chunks to
 				// file as they are decoded.
 				int ite = 0;
-				int chunkSize = Integer.MAX_VALUE;
+				int chunkSize = 512;
 
 				// create new file
 				String path = Environment.getExternalStorageDirectory()
@@ -694,11 +696,11 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					Log.d("TAG_ACTIVITY", "FILE NOT FOUND" + fnfe);
 					return;
 				}
-
+				
 				// decode and write to file
-
-				int fIte = 0;
-				while (ite < Integer.MAX_VALUE) {
+				Log.d("TAG_ACTIVITY","available="+dataSize);
+				Log.d("TAG_ACTIVITY",mp3URI.toString());
+				while (ite < dataSize) {
 					byte[] output = decode(data, ite, ite + chunkSize);
 					if (output == null) {
 						Log.d("TAG_ACTIVITY", "NULL OUTPUT, DONE HERE");
@@ -710,7 +712,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 							Log.d("TAG_ACTIVITY", "outLen = " + output.length);
 							bos.write(output);
 							ite += chunkSize;
-							fIte += output.length;
 
 						} catch (IOException e) {
 							break;
@@ -759,8 +760,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				// Reading the file..
 				byte[] byteData = null;
 				File file = null;
-				String filePath = path;
-				file = new File(filePath);
+				file = new File(path);
 
 				byteData = new byte[(int) count];
 				FileInputStream in = null;
@@ -787,10 +787,9 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					}
 					if (ret != -1) {
 						// Write the byte array to the track
-						playbackRate += 500;
 						Log.d("TAG_ACTIVITY", Integer.toString(playbackRate)
 								+ " playback Rate");
-						at.setPlaybackRate(playbackRate);
+//						at.setPlaybackRate(playbackRate);
 						at.write(byteData, 0, ret);
 						Log.d("TAG_ACTIVITY", Integer.toString(ret));
 						bytesread += ret;
