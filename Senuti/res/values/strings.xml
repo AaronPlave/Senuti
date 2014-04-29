@@ -12,5 +12,6 @@
 	<string name="reverse">Reverse</string>
 	<string name="pitch_control">Pitch Control</string>
 	<string name="random">Random</string>
+	<string name="choose">Choose</string>
 
 </resources>
