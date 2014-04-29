@@ -107,6 +107,7 @@ public class MusicRetriever {
         if (mItems.size() <= 0) return null;
         return mItems.get(mRandom.nextInt(mItems.size()));
     }
+    
 
     public static class Item {
         long id;

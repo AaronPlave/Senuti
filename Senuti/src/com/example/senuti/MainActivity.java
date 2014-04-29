@@ -18,7 +18,7 @@ import javazoom.jl.decoder.Header;
 import javazoom.jl.decoder.SampleBuffer;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ContentUris;
+import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -43,11 +43,13 @@ import com.example.MusicRetriever.PrepareMusicRetrieverTask;
 public class MainActivity extends Activity implements OnPreparedListener,
 		PrepareMusicRetrieverTask.MusicRetrieverPreparedListener {
 
+	protected static final int ACTIVITY_CHOOSE_FILE = 1;
 	ArrayList<MediaPlayer> mediaPlayers;
 	ArrayList<Button> buttons;
 	double sliderval;
 	boolean musicRetrieverReady = false;
 	MusicRetriever mRetriever;
+	final AudioTrackPlayer atp = new AudioTrackPlayer();
 
 	// TODO:LOCK ORIENTATION
 
@@ -77,7 +79,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		execute.execute();
 
 		// create new instance of AudioTrackPlayer
-		final AudioTrackPlayer atp = new AudioTrackPlayer();
 
 		// Bind play AT file
 		Button atPlay = (Button) findViewById(R.id.btnAudioTrackPlay);
@@ -171,6 +172,19 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			}
 		});
 
+		Button btn = (Button) this.findViewById(R.id.btnChoose);
+		btn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent chooseFile;
+				Intent intent;
+				chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
+				chooseFile.setType("file/*");
+				intent = Intent.createChooser(chooseFile, "Choose a file");
+				startActivityForResult(intent, ACTIVITY_CHOOSE_FILE);
+			}
+		});
+
 		// Bind button click to playMP3()
 		mediaPlayers = new ArrayList<MediaPlayer>();
 		buttons = new ArrayList<Button>();
@@ -218,6 +232,27 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		// }
 		// });
 		// }
+	}
+
+	// ///
+
+	// ///
+
+	// ////HERE ENDS ONcREATE
+
+	// ////
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		switch (requestCode) {
+		case ACTIVITY_CHOOSE_FILE: {
+			if (resultCode == RESULT_OK) {
+				Uri uri = data.getData();
+
+				atp.playSong(uri);
+			}
+		}
+		}
 	}
 
 	private void stopMP3(MediaPlayer mp) {
@@ -275,50 +310,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	// }
 	// }
 	// }
-
-	public static class Item {
-		long id;
-		String artist;
-		String title;
-		String album;
-		long duration;
-
-		public Item(long id, String artist, String title, String album,
-				long duration) {
-			this.id = id;
-			this.artist = artist;
-			this.title = title;
-			this.album = album;
-			this.duration = duration;
-		}
-
-		public long getId() {
-			return id;
-		}
-
-		public String getArtist() {
-			return artist;
-		}
-
-		public String getTitle() {
-			return title;
-		}
-
-		public String getAlbum() {
-			return album;
-		}
-
-		public long getDuration() {
-			return duration;
-		}
-
-		public Uri getURI() {
-			return ContentUris
-					.withAppendedId(
-							android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-							id);
-		}
-	}
 
 	public class AudioTrackPlayer {
 
@@ -418,6 +409,24 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		// return songs;
 		// };
 
+		public void playSong(Uri song) {
+			// Check if audioThread is initialized
+			if (audioThread != null) {
+				audioThread.clear();
+				audioThread = null;
+			}
+
+			if (song == null) {
+				Log.d("TAG_ACTIVITY", "RANDOM SONG == NULL");
+				return;
+			} else {
+				play();
+				Log.d("TAG_ACTIVITY", "NOT NULL?");
+				// Log.d("TAG_ACTIVITY", song.getTitle());
+				audioThread.TRACK = song;
+			}
+		}
+
 		public void playRandomSong() {
 			// Check if audioThread is initialized
 			if (audioThread != null) {
@@ -425,22 +434,21 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				audioThread = null;
 			}
 
-			com.example.MusicRetriever.MusicRetriever.Item song = mRetriever
-					.getRandomItem();
+			Uri song = mRetriever.getRandomItem().getURI();
 			if (song == null) {
 				Log.d("TAG_ACTIVITY", "RANDOM SONG == NULL");
 				return;
 			} else {
 				play();
 				Log.d("TAG_ACTIVITY", "NOT NULL?");
-				Log.d("TAG_ACTIVITY", song.getTitle());
+				// Log.d("TAG_ACTIVITY", song.getTitle());
 				audioThread.TRACK = song;
 			}
 		}
 
 		private class AudioThread extends Thread {
 
-			com.example.MusicRetriever.MusicRetriever.Item TRACK;
+			Uri TRACK;
 			boolean ALIVE = true;
 			boolean PLAYING = false;
 			boolean PAUSED = false;
@@ -628,8 +636,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				}
 			}
 
-			public void prepareAndPlayTrack(
-					com.example.MusicRetriever.MusicRetriever.Item TRACK)
+			public void prepareAndPlayTrack(Uri TRACK)
 					throws IOException {
 				if (TRACK == null) {
 					Log.d("TAG_ACTIVITY", "No track, returning");
@@ -641,7 +648,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					return;
 				}
 				Log.d("TAG_ACTIVITY", "IN PLAY");
-				Log.d("TAG_ACTIVITY", TRACK.getURI().toString());
+				Log.d("TAG_ACTIVITY", TRACK.toString());
 
 				// Reading the file..
 				// InputStream in1 = getResources().openRawResource(
@@ -660,13 +667,13 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				// getResources().openRawResource(R.raw.levels);
 
 				// Get inputstream from uri
-				Uri mp3URI = TRACK.getURI();
+				Uri mp3URI = TRACK;
 				if (mp3URI == null)
 					return;
 				InputStream data = getContentResolver().openInputStream(mp3URI);
 				File dataFile = new File(mp3URI.toString());
 				int dataSize = (int) dataFile.length();
-				
+
 				Log.d("TAG_ACTIVITY", "DECODING MP3 TO WAV");
 				long start = System.currentTimeMillis();
 
@@ -696,10 +703,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					Log.d("TAG_ACTIVITY", "FILE NOT FOUND" + fnfe);
 					return;
 				}
-				
+
 				// decode and write to file
-				Log.d("TAG_ACTIVITY","available="+dataSize);
-				Log.d("TAG_ACTIVITY",mp3URI.toString());
+				Log.d("TAG_ACTIVITY", "available=" + dataSize);
+				Log.d("TAG_ACTIVITY", mp3URI.toString());
 				while (ite < dataSize) {
 					byte[] output = decode(data, ite, ite + chunkSize);
 					if (output == null) {
@@ -721,7 +728,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 				Log.d("TAG_ACTIVITY", "bos len");
 
-//				byte[] output2 = decode(data, 0, 1);
+				// byte[] output2 = decode(data, 0, 1);
 
 				// close the stream
 				try {
@@ -789,7 +796,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 						// Write the byte array to the track
 						Log.d("TAG_ACTIVITY", Integer.toString(playbackRate)
 								+ " playback Rate");
-//						at.setPlaybackRate(playbackRate);
+						// at.setPlaybackRate(playbackRate);
 						at.write(byteData, 0, ret);
 						Log.d("TAG_ACTIVITY", Integer.toString(ret));
 						bytesread += ret;
@@ -896,8 +903,8 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			// at.release();
 			// PLAYING = false;
 			// }
-		};
 
+		}
 	}
 
 }
