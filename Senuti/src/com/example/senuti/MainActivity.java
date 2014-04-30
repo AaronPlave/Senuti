@@ -18,6 +18,7 @@ import javazoom.jl.decoder.Header;
 import javazoom.jl.decoder.SampleBuffer;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -486,7 +487,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				}
 			}
 
-			double MAX_OFFSET = 48000.0;
+			double MAX_OFFSET = 80000.0;
 
 			public void setPitchOffset(double p) {
 				if (p == 0.5)
@@ -671,8 +672,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				if (mp3URI == null)
 					return;
 				InputStream data = getContentResolver().openInputStream(mp3URI);
-				File dataFile = new File(mp3URI.toString());
-				int dataSize = (int) dataFile.length();
+				
+//				File dataFile = new File(mp3URI.getPath()+".mp3");
+//				long dataSize = (long) dataFile.length();
+//				Log.d("TAG_ACTIVITY","IS FILE?!"+dataFile.isFile());
 
 				Log.d("TAG_ACTIVITY", "DECODING MP3 TO WAV");
 				long start = System.currentTimeMillis();
@@ -684,8 +687,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				// ----------------------------------
 				// Method to decode the data in chunks and write the chunks to
 				// file as they are decoded.
-				int ite = 0;
-				int chunkSize = 512;
+				
 
 				// create new file
 				String path = Environment.getExternalStorageDirectory()
@@ -705,28 +707,41 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				}
 
 				// decode and write to file
-				Log.d("TAG_ACTIVITY", "available=" + dataSize);
+//				Log.d("TAG_ACTIVITY", "available=" + dataFile.isFile());
 				Log.d("TAG_ACTIVITY", mp3URI.toString());
-				while (ite < dataSize) {
-					byte[] output = decode(data, ite, ite + chunkSize);
+				
+				int ite = 44100;
+//				int chunkSize = 1024;
+//				int iterSize = 0;
+//				int sum = 0;
+				Log.d("TAG_ACTIVITY", "data length "+data.available());
+				while (ite < data.available()) {
+					Log.d("TAG_ACTIVITY", "ITE = "+ite);
+					byte[] output = decode(data, 0,ite);
 					if (output == null) {
 						Log.d("TAG_ACTIVITY", "NULL OUTPUT, DONE HERE");
 						break;
 					} else {
 						// write to file
 						try {
-							Log.d("TAG_ACTIVITY", "ite = " + ite);
-							Log.d("TAG_ACTIVITY", "outLen = " + output.length);
+//							Log.d("TAG_ACTIVITY", "decoding from = " + ite + " to "+(ite+chunkSize));
+//							Log.d("TAG_ACTIVITY", "outLen = " + output.length);
 							bos.write(output);
-							ite += chunkSize;
+							Log.d("TAG_ACTIVITY",""+(output.length/44100)*1000);
+//							sum += chunkSize;
+							Log.d("TAG_ACTIVITY", "data length "+data.available());
+//							Log.d("TAG_ACTIVITY", "ITE = "+ite);
+//							ite = outLen;
 
 						} catch (IOException e) {
 							break;
 						}
 					}
 				}
+				
 
-				Log.d("TAG_ACTIVITY", "bos len");
+//				Log.d("TAG_ACTIVITY", "sum "+sum);
+				Log.d("TAG_ACTIVITY", "data length "+data.available());
 
 				// byte[] output2 = decode(data, 0, 1);
 
@@ -763,7 +778,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			}
 
 			public void play(String path) {
-				int count = 512 * 1024; // 512 kb
+				int count = 512; // 512 kb
 				// Reading the file..
 				byte[] byteData = null;
 				File file = null;
@@ -782,9 +797,9 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				int bytesread = 0, ret = 0;
 				int size = (int) file.length();
 				at.play();
-				int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) * 44100);
+//				int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) * 44100);
 
-				at.setPlaybackRate(playbackRate);
+				at.setPlaybackRate(44100 + PITCHOFFSET);
 				while (bytesread < size) {
 					try {
 						ret = in.read(byteData, 0, count);
@@ -794,11 +809,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					}
 					if (ret != -1) {
 						// Write the byte array to the track
-						Log.d("TAG_ACTIVITY", Integer.toString(playbackRate)
-								+ " playback Rate");
 						// at.setPlaybackRate(playbackRate);
+						at.setPlaybackRate(44100 + PITCHOFFSET);
 						at.write(byteData, 0, ret);
-						Log.d("TAG_ACTIVITY", Integer.toString(ret));
+//						Log.d("TAG_ACTIVITY", Integer.toString(ret));
 						bytesread += ret;
 					} else
 						break;
