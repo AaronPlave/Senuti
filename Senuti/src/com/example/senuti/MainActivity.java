@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
@@ -215,7 +216,11 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	}
 
 	public void back() {
-		atp.back();
+		try {
+			atp.back();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void random() {
@@ -310,7 +315,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			}
 		}
 
-		public void back() {
+		public void back() throws IOException {
 			audioThread.back();
 		}
 
@@ -421,6 +426,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			int position = 0;
 			int count = 512; // how many bytes to be read at a time
 			int TRACKLENGTH;
+			RandomAccessFile ra = null;
 
 			AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, 44100,
 					AudioFormat.CHANNEL_OUT_STEREO,
@@ -473,19 +479,19 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				return PAUSED;
 			}
 
-			public void back() {
+			public void back() throws IOException {
 
 				boolean wasPaused = audioThread.PAUSED;
 				PAUSED = true;
 				at.stop();
 				at.flush();
-				// if reversed, set to end of song, else set to beginning
+				// // if reversed, set to end of song, else set to beginning
 				if (REVERSE) {
 					audioThread.position = audioThread.TRACKLENGTH - count;
 				} else {
-					audioThread.position = 0;
+					ra.seek(0);
 				}
-				//
+				// //
 				at.play();
 				PAUSED = wasPaused;
 			}
@@ -739,49 +745,70 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				play(path);
 			}
 
-			public void play(String path) {
+			public void play(String path) throws IOException {
 				int count = 512; // 512 kb
+				int position = 0;
 				// Reading the file..
 				byte[] byteData = null;
 				File file = null;
 				file = new File(path);
 
 				byteData = new byte[(int) count];
-				FileInputStream in = null;
+				// FileInputStream in = null;
 				try {
-					in = new FileInputStream(file);
-
+					ra = new RandomAccessFile(file, "r");
 				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
-				int bytesread = 0, ret = 0;
+				// try {
+				// in = new FileInputStream(file);
+				//
+				// } catch (FileNotFoundException e) {
+				// e.printStackTrace();
+				// }
+
+				int ret = 0;
 				int size = (int) file.length();
 				at.play();
-				// int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) *
-				// 44100);
 
 				at.setPlaybackRate(44100 + PITCHOFFSET);
-				while (bytesread < size) {
+				while (position < size && position >= 0) {
+
+					// check paused
+					if (PAUSED) {
+						continue;
+					}
+
+					// Log.d("TAG_ACTIVITY", "" + position);
+
 					try {
-						ret = in.read(byteData, 0, count);
+						if (REVERSE) {
+							ra.seek(position); // IS COUNT = RET SIZE?
+						}
+						ret = ra.read(byteData, 0, count);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					if (ret != -1) {
 						// Write the byte array to the track
-						// at.setPlaybackRate(playbackRate);
+						if (REVERSE) {
+							reverseFrames(byteData);
+							position -= byteData.length;
+						} else {
+							position += byteData.length;
+						}
+
 						at.setPlaybackRate(44100 + PITCHOFFSET);
 						at.write(byteData, 0, ret);
-						// Log.d("TAG_ACTIVITY", Integer.toString(ret));
-						bytesread += ret;
+						Log.d("TAG_ACTIVITY", Integer.toString(position));
+
 					} else
 						break;
 				}
 				try {
-					in.close();
+					ra.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -789,7 +816,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				at.stop();
 				at.release();
 			}
-
 			// public void play2(com.example.MusicRetriever.MusicRetriever.Item
 			// TRACK) {
 			// //Play from byte array
@@ -883,5 +909,16 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 		}
 	}
-
 }
+
+// TODO: Some sort of indicator for song speed i.e. normal, 1.3x...
+// TODO: Add current song info to player
+// TODO: Make play and pause one button
+// TODO: Add Play, Pause, Back, Forward icons.
+// TODO: Make sure the selected audio file is an MP3.
+// TODO: Make a waiting animation while the song is decoding.
+// TODO: Maybe add a volume control to the AudioTrack bit, in case
+// the synth samples are too loud/soft in comparison to the AT.
+
+// TODO: Maybe fix that decoding/saving to file blip..
+// TODO: Load next song in new thread
