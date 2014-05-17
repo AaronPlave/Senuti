@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
@@ -18,7 +17,7 @@ import javazoom.jl.decoder.Header;
 import javazoom.jl.decoder.SampleBuffer;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -33,24 +32,23 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.Switch;
 
 import com.example.MusicRetriever.MusicRetriever;
 import com.example.MusicRetriever.PrepareMusicRetrieverTask;
+import com.example.senuti.BeatFragment.OnBeatPlayedListener;
+import com.example.senuti.PlayFragment.PlayControllerListener;
 
 @SuppressLint("NewApi")
 public class MainActivity extends Activity implements OnPreparedListener,
-		PrepareMusicRetrieverTask.MusicRetrieverPreparedListener {
+		PrepareMusicRetrieverTask.MusicRetrieverPreparedListener,
+		OnBeatPlayedListener, FragmentSwitcherListener, PlayControllerListener {
 
-	protected static final int ACTIVITY_CHOOSE_FILE = 1;
-	ArrayList<MediaPlayer> mediaPlayers;
-	ArrayList<Button> buttons;
-	double sliderval;
+	boolean isDualPane;
 	boolean musicRetrieverReady = false;
 	MusicRetriever mRetriever;
 	final AudioTrackPlayer atp = new AudioTrackPlayer();
+	Button switchButton;
+	int nextFrag;
 
 	// TODO:LOCK ORIENTATION
 
@@ -66,10 +64,51 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		Log.d("TAG_ACTIVITY", "on create called");
 		super.onCreate(savedInstanceState);
 		// setContentView(R.layout.activity_main);
 
-		setContentView(R.layout.effects_layout);
+		setContentView(R.layout.main);
+
+		// fill the screen with one or two fragments, depending on size of
+		// device. we used some layout aliases to maket his easier
+
+		if (findViewById(R.id.fragment_container_one) != null) {
+			Log.d("TAG_ACTIVITY", "fragment container one not null");
+
+			// Create a new Fragment to be placed in the activity layout
+			PlayFragment pf = new PlayFragment();
+
+			// Add the fragment to the 'fragment_container' FrameLayout
+			getFragmentManager().beginTransaction()
+					.add(R.id.fragment_container_one, pf).commit();
+			View secondFrag = findViewById(R.id.fragment_container_two);
+
+			isDualPane = (secondFrag != null && secondFrag.getVisibility() == View.VISIBLE);
+
+			if (isDualPane) {
+				Log.d("TAG_ACTIVITY", "Dual pane mode.");
+				BeatFragment bf = new BeatFragment();
+				getFragmentManager().beginTransaction()
+						.add(R.id.fragment_container_two, bf).commit();
+				Log.d("TAG_ACTIVITY", "added second fragment");
+			} else
+				nextFrag = 1;
+		}
+
+		if (!isDualPane) {
+			Log.d("TAG_ACTIVITY", "setting a switch button");
+			switchButton = (Button) findViewById(R.id.fragment_switch);
+			switchButton.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					showFragment(nextFrag);
+				}
+			});
+		} else {
+			Log.d("TAG_ACTIVITY", "no need for button, in dual pane mode");
+		}
 
 		// Create the retriever and start an asynchronous task that will prepare
 		// it.
@@ -81,158 +120,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 		// create new instance of AudioTrackPlayer
 
-		// Bind play AT file
-		Button atPlay = (Button) findViewById(R.id.btnAudioTrackPlay);
-		atPlay.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				atp.play();
-			}
-		});
-
-		// Bind pause AT file
-		Button atPause = (Button) findViewById(R.id.btnAudioTrackPause);
-		atPause.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				atp.pause();
-			}
-		});
-
-		// Bind the random button click
-		Button randomButton = (Button) findViewById(R.id.btnRandom);
-		randomButton.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				if (musicRetrieverReady) {
-					atp.playRandomSong();
-				} else {
-					Log.d("TAG_ACTIVITY",
-							"NOT DONE RETRIEVING, should set spinner.");
-				}
-				// String songs = atp.getSongsOnDevice().toString();
-
-				// Log.d("TAG_ACTIVITY","END OF SONGS");
-			}
-		});
-
-		// Bind the pitch slider for AT
-		SeekBar pitchSlider = (SeekBar) findViewById(R.id.pitchSlider);
-		// create a listener for the slider bar;
-		OnSeekBarChangeListener listener = new OnSeekBarChangeListener() {
-			public void onStopTrackingTouch(SeekBar seekBar) {
-			}
-
-			public void onStartTrackingTouch(SeekBar seekBar) {
-			}
-
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
-				if (fromUser) {
-					Log.d("TAG_ACTIVITY", Integer.toString(progress));
-					sliderval = progress / (double) seekBar.getMax();
-					Log.d("TAG_ACTIVITY", Double.toString(sliderval));
-					atp.setPitch(sliderval);
-
-				}
-			}
-		};
-
-		// set the listener on the slider
-		pitchSlider.setOnSeekBarChangeListener(listener);
-
-		// Bind the reverse toggle for AT
-		Switch atReverse = (Switch) findViewById(R.id.toggleReverse);
-		atReverse.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View view) {
-				// Is the toggle on?
-				boolean on = ((Switch) view).isChecked();
-
-				if (on) {
-					atp.setReverse(true);
-				} else {
-					atp.setReverse(false);
-				}
-			}
-		});
-
-		// Bind backtrack AT file
-		Button atBack = (Button) findViewById(R.id.btnAudioTrackBack);
-		atBack.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				// TODO: Add logic to determine whether or not to go back to
-				// previous song or
-				// go to beginning of song based on where in the song you
-				// currently are.
-				atp.back();
-
-			}
-		});
-
-		Button btn = (Button) this.findViewById(R.id.btnChoose);
-		btn.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Intent chooseFile;
-				Intent intent;
-				chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
-				chooseFile.setType("file/*");
-				intent = Intent.createChooser(chooseFile, "Choose a file");
-				startActivityForResult(intent, ACTIVITY_CHOOSE_FILE);
-			}
-		});
-
-		// Bind button click to playMP3()
-		mediaPlayers = new ArrayList<MediaPlayer>();
-		buttons = new ArrayList<Button>();
-
-		// for (int i = 0; i < 9; i++)
-		// mediaPlayers.add(new MediaPlayer());
-		// Button playButton = (Button) findViewById(R.id.btnPlay1);
-		// buttons.add(playButton);
-		// Button playButton2 = (Button) findViewById(R.id.btnPlay2);
-		// buttons.add(playButton2);
-		// Button playButton3 = (Button) findViewById(R.id.btnPlay3);
-		// buttons.add(playButton3);
-		// Button playButton4 = (Button) findViewById(R.id.btnPlay4);
-		// buttons.add(playButton4);
-		// Button playButton5 = (Button) findViewById(R.id.btnPlay5);
-		// buttons.add(playButton5);
-		// Button playButton6 = (Button) findViewById(R.id.btnPlay6);
-		// buttons.add(playButton6);
-		// Button playButton7 = (Button) findViewById(R.id.btnPlay7);
-		// buttons.add(playButton7);
-		// Button playButton8 = (Button) findViewById(R.id.btnPlay8);
-		// buttons.add(playButton8);
-		// Button playButton9 = (Button) findViewById(R.id.btnPlay9);
-		// buttons.add(playButton9);
-		//
-		// for (int i = 0; i < buttons.size(); i++) {
-		// final int j = i;
-		// buttons.get(i).setOnTouchListener(new OnTouchListener() {
-		//
-		// @Override
-		// public boolean onTouch(View v, MotionEvent event) {
-		// if (event.getAction() == MotionEvent.ACTION_DOWN) {
-		// int id;
-		// if (j < 5)
-		// id = R.raw.sandstorm;
-		// else
-		// id = R.raw.levels;
-		// playMP3(mediaPlayers.get(j), id);
-		// return true;
-		// } else if (event.getAction() == MotionEvent.ACTION_UP) {
-		// stopMP3(mediaPlayers.get(j));
-		//
-		// }
-		// return false;
-		// }
-		// });
-		// }
 	}
 
 	// ///
@@ -243,8 +130,53 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 	// ////
 
+	// /////
+
+	void playSong(Uri uri) {
+		atp.playSong(uri);
+	}
+
+	// this method lets you switch fragments within one pane back and forth
+	public void showFragment(int fragment) {
+		FragmentManager fm = getFragmentManager();
+		android.app.FragmentTransaction ft = fm.beginTransaction();
+		if (fragment == 1) {
+			nextFrag = 0;
+			BeatFragment bf = new BeatFragment();
+			// Bundle args = new Bundle();
+			// dont have any args at the moment
+			// bf.setArguments(args);
+
+			ft.replace(R.id.fragment_container_one, bf);
+			ft.addToBackStack(null);
+			ft.commit();
+		} else if (fragment == 0) {
+			nextFrag = 1;
+			PlayFragment pf = new PlayFragment();
+
+			// dont have any args at the moment
+			// newFragment.setArguments(args);
+
+			ft.replace(R.id.fragment_container_one, pf);
+			ft.addToBackStack(null);
+			ft.commit();
+		}
+
+	}
+
+	protected static final int ACTIVITY_CHOOSE_FILE = 1;
+
+	public void chooseFileFromIntent() {
+		Intent chooseFile;
+		Intent intent;
+		chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
+		chooseFile.setType("file/*");
+		intent = Intent.createChooser(chooseFile, "Choose a file");
+		startActivityForResult(intent, ACTIVITY_CHOOSE_FILE);
+	}
+
 	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
 		case ACTIVITY_CHOOSE_FILE: {
 			if (resultCode == RESULT_OK) {
@@ -256,7 +188,24 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		}
 	}
 
-	private void stopMP3(MediaPlayer mp) {
+	// launcher method to implement interface so UI can be put in fragment
+	public void setReverse(boolean dir) {
+		atp.setReverse(dir);
+	}
+
+	public void play() {
+		atp.play();
+	}
+
+	public void pause() {
+		atp.pause();
+	}
+
+	public void setPitch(double sliderVal) {
+		atp.setPitch(sliderVal);
+	}
+
+	public void stopMP3(MediaPlayer mp) {
 		if (mp == null) {
 
 		} else {
@@ -265,7 +214,19 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		}
 	}
 
-	private void playMP3(MediaPlayer mp, int rid) {
+	public void back() {
+		atp.back();
+	}
+
+	public void random() {
+		if (musicRetrieverReady) {
+			atp.playRandomSong();
+		} else {
+			Log.d("TAG_ACTIVITY", "NOT DONE RETRIEVING, should set spinner.");
+		}
+	}
+
+	public void playMP3(MediaPlayer mp, int rid) {
 		if (mp == null) {
 
 		} else
@@ -637,8 +598,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				}
 			}
 
-			public void prepareAndPlayTrack(Uri TRACK)
-					throws IOException {
+			public void prepareAndPlayTrack(Uri TRACK) throws IOException {
 				if (TRACK == null) {
 					Log.d("TAG_ACTIVITY", "No track, returning");
 					return;
@@ -672,10 +632,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				if (mp3URI == null)
 					return;
 				InputStream data = getContentResolver().openInputStream(mp3URI);
-				
-//				File dataFile = new File(mp3URI.getPath()+".mp3");
-//				long dataSize = (long) dataFile.length();
-//				Log.d("TAG_ACTIVITY","IS FILE?!"+dataFile.isFile());
+
+				// File dataFile = new File(mp3URI.getPath()+".mp3");
+				// long dataSize = (long) dataFile.length();
+				// Log.d("TAG_ACTIVITY","IS FILE?!"+dataFile.isFile());
 
 				Log.d("TAG_ACTIVITY", "DECODING MP3 TO WAV");
 				long start = System.currentTimeMillis();
@@ -687,7 +647,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				// ----------------------------------
 				// Method to decode the data in chunks and write the chunks to
 				// file as they are decoded.
-				
 
 				// create new file
 				String path = Environment.getExternalStorageDirectory()
@@ -707,41 +666,44 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				}
 
 				// decode and write to file
-//				Log.d("TAG_ACTIVITY", "available=" + dataFile.isFile());
+				// Log.d("TAG_ACTIVITY", "available=" + dataFile.isFile());
 				Log.d("TAG_ACTIVITY", mp3URI.toString());
-				
+
 				int ite = 44100;
-//				int chunkSize = 1024;
-//				int iterSize = 0;
-//				int sum = 0;
-				Log.d("TAG_ACTIVITY", "data length "+data.available());
+				// int chunkSize = 1024;
+				// int iterSize = 0;
+				// int sum = 0;
+				Log.d("TAG_ACTIVITY", "data length " + data.available());
 				while (ite < data.available()) {
-					Log.d("TAG_ACTIVITY", "ITE = "+ite);
-					byte[] output = decode(data, 0,ite);
+					Log.d("TAG_ACTIVITY", "ITE = " + ite);
+					byte[] output = decode(data, 0, ite);
 					if (output == null) {
 						Log.d("TAG_ACTIVITY", "NULL OUTPUT, DONE HERE");
 						break;
 					} else {
 						// write to file
 						try {
-//							Log.d("TAG_ACTIVITY", "decoding from = " + ite + " to "+(ite+chunkSize));
-//							Log.d("TAG_ACTIVITY", "outLen = " + output.length);
+							// Log.d("TAG_ACTIVITY", "decoding from = " + ite +
+							// " to "+(ite+chunkSize));
+							// Log.d("TAG_ACTIVITY", "outLen = " +
+							// output.length);
 							bos.write(output);
-							Log.d("TAG_ACTIVITY",""+(output.length/44100)*1000);
-//							sum += chunkSize;
-							Log.d("TAG_ACTIVITY", "data length "+data.available());
-//							Log.d("TAG_ACTIVITY", "ITE = "+ite);
-//							ite = outLen;
+							Log.d("TAG_ACTIVITY", "" + (output.length / 44100)
+									* 1000);
+							// sum += chunkSize;
+							Log.d("TAG_ACTIVITY",
+									"data length " + data.available());
+							// Log.d("TAG_ACTIVITY", "ITE = "+ite);
+							// ite = outLen;
 
 						} catch (IOException e) {
 							break;
 						}
 					}
 				}
-				
 
-//				Log.d("TAG_ACTIVITY", "sum "+sum);
-				Log.d("TAG_ACTIVITY", "data length "+data.available());
+				// Log.d("TAG_ACTIVITY", "sum "+sum);
+				Log.d("TAG_ACTIVITY", "data length " + data.available());
 
 				// byte[] output2 = decode(data, 0, 1);
 
@@ -797,7 +759,8 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				int bytesread = 0, ret = 0;
 				int size = (int) file.length();
 				at.play();
-//				int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) * 44100);
+				// int playbackRate = (int) (Math.pow(2.0, (1.0 / 12.0)) *
+				// 44100);
 
 				at.setPlaybackRate(44100 + PITCHOFFSET);
 				while (bytesread < size) {
@@ -812,7 +775,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 						// at.setPlaybackRate(playbackRate);
 						at.setPlaybackRate(44100 + PITCHOFFSET);
 						at.write(byteData, 0, ret);
-//						Log.d("TAG_ACTIVITY", Integer.toString(ret));
+						// Log.d("TAG_ACTIVITY", Integer.toString(ret));
 						bytesread += ret;
 					} else
 						break;
