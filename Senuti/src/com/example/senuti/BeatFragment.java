@@ -28,6 +28,7 @@ public class BeatFragment extends Fragment {
 	ArrayList<Button> buttons;
 	Switch editSwitch;
 	ArrayList<BeatItem> items;
+	boolean recording;
 	boolean editing; //if editing == true, then when you push a button, implicit intent fires to select which sound to bind
 	
 
@@ -66,6 +67,7 @@ public class BeatFragment extends Fragment {
 		View rootView = inflater.inflate(R.layout.activity_main, container, false);
 		Log.d("TAG_ACTIVITY", "In beat fragment, getting ready for buttons n stuff");
 		
+		recording = false;
 		editing = false;
 		//Bind button click to playMP3()
 		
@@ -143,11 +145,16 @@ public class BeatFragment extends Fragment {
 				{
 					//when editing, start recording sound on touch, stop on touch release
 					if (event.getAction() == MotionEvent.ACTION_DOWN) {
-						startRecording(item);
-						return true;
+						if(!recording)
+						{
+							startRecording(item);
+							recording = true;
+							return true;
+						}
 					}else
 						if(event.getAction() == MotionEvent.ACTION_UP){
 							stopRecording(item);
+							recording = false;
 							return true;
 						}
 					return false;
@@ -197,9 +204,12 @@ public class BeatFragment extends Fragment {
 			mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
 			Log.d("TAG_ACTIVITY", item.getFileName());
 			File outputFile = new File(item.getFileName());
-			if (outputFile.exists())
+			if (outputFile.exists()){
+				Log.d("TAG_ACTIVITY","deleting existing file");
 				outputFile.delete();
-	    	outputFile.createNewFile();
+			}
+	    	if(outputFile.createNewFile())
+	    		Log.d("TAG_ACTIVITY","created a new file");
 			mRecorder.setOutputFile(item.getFileName());
 			mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 			mRecorder.prepare();
@@ -212,9 +222,14 @@ public class BeatFragment extends Fragment {
 
 	private void stopRecording(BeatItem item) {
 		MediaRecorder mRecorder = item.getRecorder();
-		mRecorder.stop();
-		mRecorder.release();
-		mRecorder = null;
+		try {
+		    mRecorder.stop();
+		} catch(RuntimeException e) {
+		     //you must delete the outputfile when the recorder stop failed.
+		} finally {
+		    mRecorder.release();
+		    mRecorder = null;
+		}
 		item.setRecorder(new MediaRecorder());
 	}
 	
