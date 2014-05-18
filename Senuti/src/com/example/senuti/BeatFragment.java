@@ -141,42 +141,46 @@ public class BeatFragment extends Fragment {
 			
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
+				Button b = item.getButton();
 				if(editing)
 				{
 					//when editing, start recording sound on touch, stop on touch release
 					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						b.setPressed(true);
 						if(!recording)
 						{
 							startRecording(item);
 							recording = true;
-							return true;
+							
 						}
 					}else
 						if(event.getAction() == MotionEvent.ACTION_UP){
+							b.setPressed(false);
 							stopRecording(item);
 							recording = false;
-							return true;
+							
 						}
-					return false;
 				}else
 				{
 					//when not editing, play sound on touch, stop playing on release
 					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						b.setPressed(true);
 						 if(item.getId()==15)
 						 {
 							 mCallback.playCustomSound(item.getPlayer(), item.getFileName());
-							 return true;
+							
 						 }else
 						 {
 							 item.setPlayer(mCallback.playDefaultSound(item.getPlayer(), item.getId()));
-							 return true;
+							
 						 }
 					 } else if (event.getAction() == MotionEvent.ACTION_UP) {
-						 Log.d("TAG_ACTIVITY", "TOUCH RELEASED, levels should stop now...");
+						 b.setPressed(false);
 						 MediaPlayer player = item.getPlayer();
 					// mCallback.stopMP3(player);//stopMP3 calls mp. release
 					 if(item.getPlayer()!=null)
 					 {
+						 
 						 if(player.isPlaying())
 						 {
 							 Log.d("TAG_ACTIVITY", "really, telling it to stop");
@@ -189,9 +193,10 @@ public class BeatFragment extends Fragment {
 					 {
 						 Log.d("TAG_ACTIVITY", "null media player?");
 					 }
-					 return true;
+					 
 					 }
 				}
+				item.setButton(b);
 				return false;
 			}
 		});
@@ -269,6 +274,11 @@ public class BeatFragment extends Fragment {
 		public Button getButton()
 		{
 			return button;
+		}
+		
+		public void setButton(Button b)
+		{
+			button = b;
 		}
 		
 		public void setPlayer(MediaPlayer m)

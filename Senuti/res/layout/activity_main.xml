@@ -15,7 +15,7 @@
         android:layout_height="50dp"
         tools:context=".MainActivity"
         android:layout_weight = "3"
-        android:text="REcord" />
+        android:text="Record" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -28,22 +28,22 @@
         android:id="@+id/btnPlay1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "1"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     <Button
         android:id="@+id/btnPlay2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "2"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     <Button
         android:id="@+id/btnPlay3"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "3"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     
    		 </LinearLayout>
@@ -59,22 +59,22 @@
         android:id="@+id/btnPlay4"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "4"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     <Button
         android:id="@+id/btnPlay5"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "5"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     <Button
         android:id="@+id/btnPlay6"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "6"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     
    		 </LinearLayout>
@@ -90,22 +90,22 @@
         android:id="@+id/btnPlay7"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "7"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     <Button
         android:id="@+id/btnPlay8"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "8"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     <Button
         android:id="@+id/btnPlay9"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-      	android:text = "9"
       	android:layout_weight="10"
+      	android:background="@drawable/custom_button"
         />
     
    		 </LinearLayout>
