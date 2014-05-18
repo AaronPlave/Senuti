@@ -746,7 +746,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			}
 
 			public void play(String path) throws IOException {
-				int count = 512; // 512 kb
+				int count = 80000; // 512 kb
 				int position = 0;
 				// Reading the file..
 				byte[] byteData = null;
@@ -795,9 +795,9 @@ public class MainActivity extends Activity implements OnPreparedListener,
 						// Write the byte array to the track
 						if (REVERSE) {
 							reverseFrames(byteData);
-							position -= byteData.length;
+							position -= ret;
 						} else {
-							position += byteData.length;
+							position += ret;
 						}
 
 						at.setPlaybackRate(44100 + PITCHOFFSET);
