@@ -512,9 +512,11 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				at.flush();
 				// // if reversed, set to end of song, else set to beginning
 				if (REVERSE) {
-					audioThread.position = audioThread.TRACKLENGTH - count;
+					Log.d("TAG_ACTIVITY","TrackLength = " +TRACKLENGTH );
+					position = TRACKLENGTH-count;
 				} else {
 					ra.seek(0);
+					position = 0;
 				}
 				// //
 				at.play();
@@ -533,7 +535,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			// This function reverses the frames in a byte array, assumes frames
 			// are 4 bytes long
 			public void reverseFrames(byte[] audio) {
-				for (int i = 0; i < (Math.log(count) / Math.log(2) - 2); i++) {
+				for (int i = 0; i <= (count/8)-1; i++) {
 					// the log calculations is to calculate how many swaps are
 					// needed in a count sized array
 					for (int j = 0; j < 4; j++) {
@@ -771,7 +773,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			}
 
 			public void play(String path) throws IOException {
-				int count = 80000; // 512 kb
+				int count = 512; // 512 kb
 				int position = 0;
 				// Reading the file..
 				byte[] byteData = null;
@@ -798,14 +800,18 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				at.play();
 
 				at.setPlaybackRate(44100 + PITCHOFFSET);
-				while (position < size && position >= 0) {
+				TRACKLENGTH = size;
+				boolean continuePlaying = true;
+				while (continuePlaying) {
 
+					if (!(position <= size && position >= 0)){
+						PAUSED = true;
+					}
 					// check paused
 					if (PAUSED) {
 						continue;
 					}
 
-					// Log.d("TAG_ACTIVITY", "" + position);
 
 					try {
 						if (REVERSE) {
@@ -820,14 +826,14 @@ public class MainActivity extends Activity implements OnPreparedListener,
 						// Write the byte array to the track
 						if (REVERSE) {
 							reverseFrames(byteData);
-							position -= ret;
+							position -= byteData.length;
 						} else {
-							position += ret;
+							position += byteData.length;
 						}
 
 						at.setPlaybackRate(44100 + PITCHOFFSET);
 						at.write(byteData, 0, ret);
-						Log.d("TAG_ACTIVITY", Integer.toString(position));
+//						Log.d("TAG_ACTIVITY", Integer.toString(position));
 
 					} else
 						break;
