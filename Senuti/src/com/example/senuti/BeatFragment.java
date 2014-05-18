@@ -1,34 +1,40 @@
 package com.example.senuti;
 
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.Activity;
 import android.app.Fragment;
 import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Switch;
 
 public class BeatFragment extends Fragment {
 
 	OnBeatPlayedListener mCallback;
-	ArrayList<MediaPlayer> mediaPlayers;
 	ArrayList<Button> buttons;
+	Switch editSwitch;
 	ArrayList<BeatItem> items;
 	boolean editing; //if editing == true, then when you push a button, implicit intent fires to select which sound to bind
 	
 
     // Container Activity must implement this interface
     public interface OnBeatPlayedListener {
-        public void playMP3(MediaPlayer mp, int rid);
-
+        public MediaPlayer playDefaultSound(MediaPlayer mp, int rid);
+        public void playCustomSound(MediaPlayer mp, String filename);
 		public void stopMP3(MediaPlayer mediaPlayer);
     }
 	
@@ -60,9 +66,26 @@ public class BeatFragment extends Fragment {
 		View rootView = inflater.inflate(R.layout.activity_main, container, false);
 		Log.d("TAG_ACTIVITY", "In beat fragment, getting ready for buttons n stuff");
 		
-		
+		editing = false;
 		//Bind button click to playMP3()
-				mediaPlayers = new ArrayList<MediaPlayer>();
+		
+		editSwitch = (Switch) rootView.findViewById(R.id.edit_mode);
+		editSwitch.setOnClickListener(new OnClickListener() {
+			
+			
+			public void onClick(View v) {
+				// Is the toggle on?
+				boolean on = ((Switch) v).isChecked();
+
+				if (on) {
+					editing = true;
+				} else {
+					editing = false;
+				}
+				
+			}
+		});
+		
 				buttons = new ArrayList<Button>();
 				items = new ArrayList<BeatItem>();
 
@@ -86,61 +109,161 @@ public class BeatFragment extends Fragment {
 				 buttons.add(playButton9);
 				 
 
+				 
+				 //create items that hold all the invformation
+				 items.add(new BeatItem(buttons.get(0),new MediaPlayer(), "1", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(1),new MediaPlayer(), "2", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(2),new MediaPlayer(), "3", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(3),new MediaPlayer(), "4", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(4),new MediaPlayer(), "5", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(5),new MediaPlayer(), "6", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(6),new MediaPlayer(), "7", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(7),new MediaPlayer(), "8", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(8),new MediaPlayer(), "9", new MediaRecorder(),R.raw.levels));
+				 //for now, just puts in the same song saved 9 times as the sound. 
 				 for (int i = 0; i < buttons.size(); i++)
 				 {
-					 mediaPlayers.add(new MediaPlayer());
-					 items.add(new BeatItem(buttons.get(i),mediaPlayers.get(i), null));
-					 //TODO
-					 //set uris to a default so the buttons actually make a noise or do something
 					 
-				 }
-				 
-
-				 for (int i = 0; i < buttons.size(); i++) {
-				 final int j = i;
-				 buttons.get(i).setOnTouchListener(new OnTouchListener() {
-				
-				 @Override
-				 public boolean onTouch(View v, MotionEvent event) {
-				 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-				 int id;
-				 if (j < 5)
-				 id = R.raw.sandstorm;
-				 else
-				 id = R.raw.levels;
-				 mCallback.playMP3(mediaPlayers.get(j), id);
-				 return true;
-				 } else if (event.getAction() == MotionEvent.ACTION_UP) {
-				 mCallback.stopMP3(mediaPlayers.get(j));
-				
-				 }
-				 return false;
-				 }
-				 });
-				 }
-				
-		
+					 //once an item has a media player, we can go ahead and set its listener
+					 setButtonListener(items.get(i));
+				}
+				int blah;
 		return rootView;
 		
+	}
+	
+	//wrapper method for settting motion listener for the buttons with added functionality of specific sound/action
+	public void setButtonListener(final BeatItem item)
+	{
+		item.getButton().setOnTouchListener(new OnTouchListener() {
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				if(editing)
+				{
+					//when editing, start recording sound on touch, stop on touch release
+					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						startRecording(item);
+						return true;
+					}else
+						if(event.getAction() == MotionEvent.ACTION_UP){
+							stopRecording(item);
+							return true;
+						}
+					return false;
+				}else
+				{
+					//when not editing, play sound on touch, stop playing on release
+					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						 if(item.getId()==15)
+						 {
+							 mCallback.playCustomSound(item.getPlayer(), item.getFileName());
+							 return true;
+						 }else
+						 {
+							 item.setPlayer(mCallback.playDefaultSound(item.getPlayer(), item.getId()));
+							 return true;
+						 }
+					 } else if (event.getAction() == MotionEvent.ACTION_UP) {
+						 Log.d("TAG_ACTIVITY", "TOUCH RELEASED, levels should stop now...");
+						 MediaPlayer player = item.getPlayer();
+					// mCallback.stopMP3(player);//stopMP3 calls mp. release
+					 if(item.getPlayer()!=null)
+					 {
+						 if(player.isPlaying())
+						 {
+							 Log.d("TAG_ACTIVITY", "really, telling it to stop");
+							 player.stop();
+							 player.release();
+							 item.setPlayer(new MediaPlayer());
+						 }
+					 }
+					 else
+					 {
+						 Log.d("TAG_ACTIVITY", "null media player?");
+					 }
+					 return true;
+					 }
+				}
+				return false;
+			}
+		});
+	}
+	
+	private void startRecording(BeatItem item) {
+		try {
+			MediaRecorder mRecorder = item.getRecorder();
+			mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+			mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+			Log.d("TAG_ACTIVITY", item.getFileName());
+			File outputFile = new File(item.getFileName());
+			if (outputFile.exists())
+				outputFile.delete();
+	    	outputFile.createNewFile();
+			mRecorder.setOutputFile(item.getFileName());
+			mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+			mRecorder.prepare();
+			mRecorder.start();
+			item.setId(15);//ids are checked, 15 is bad iguess
+		} catch (IOException e) {
+			Log.e("TAG_ACTIVITY", "prepare() failed");
+		}
+	}
+
+	private void stopRecording(BeatItem item) {
+		MediaRecorder mRecorder = item.getRecorder();
+		mRecorder.stop();
+		mRecorder.release();
+		mRecorder = null;
+		item.setRecorder(new MediaRecorder());
 	}
 	
 	
 	public class BeatItem{
 		public Button button;
 		public MediaPlayer mp;
-		public Uri uri;
+		public String fileName;
+		public MediaRecorder mr;
+		public int id;
 		
-		
-		public BeatItem(Button b, MediaPlayer m, Uri u)
+		public BeatItem(Button b, MediaPlayer m, String file, MediaRecorder mr, int theId)
 		{
 			button = b;
 			mp = m;
-			uri=u;
+			fileName = Environment.getExternalStorageDirectory().getAbsolutePath();
+	        fileName+= "/senutiCustomSound";
+			fileName+= file + ".3gp";//add the last custom bit we want
+			id = theId;
+			this.mr = mr;
 		}
 		
+		public void setId(int i) {
+			id = i;
+			
+		}
+
+		public void setRecorder(MediaRecorder mediaRecorder) {
+		
+			mr = mediaRecorder;
+		}
+
+		public int getId() {
+			return id;
+		}
+
 		public Button getButton()
 		{
 			return button;
+		}
+		
+		public void setPlayer(MediaPlayer m)
+		{
+			mp = m;
+		}
+		
+		public MediaRecorder getRecorder()
+		{
+			return mr;
 		}
 		
 		public MediaPlayer getPlayer()
@@ -148,9 +271,9 @@ public class BeatFragment extends Fragment {
 			return mp;
 		}
 		
-		public Uri getUri()
+		public String getFileName()
 		{
-			return uri;
+			return fileName;
 		}
 	}
 	

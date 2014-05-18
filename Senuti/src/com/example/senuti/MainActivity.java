@@ -50,6 +50,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	final AudioTrackPlayer atp = new AudioTrackPlayer();
 	Button switchButton;
 	int nextFrag;
+	BeatFragment beatPad;
 
 	// TODO:LOCK ORIENTATION
 
@@ -79,7 +80,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 			// Create a new Fragment to be placed in the activity layout
 			PlayFragment pf = new PlayFragment();
-
+			beatPad = new BeatFragment();
 			// Add the fragment to the 'fragment_container' FrameLayout
 			getFragmentManager().beginTransaction()
 					.add(R.id.fragment_container_one, pf).commit();
@@ -89,12 +90,13 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 			if (isDualPane) {
 				Log.d("TAG_ACTIVITY", "Dual pane mode.");
-				BeatFragment bf = new BeatFragment();
+				
 				getFragmentManager().beginTransaction()
-						.add(R.id.fragment_container_two, bf).commit();
+						.add(R.id.fragment_container_two, beatPad).commit();
 				Log.d("TAG_ACTIVITY", "added second fragment");
-			} else
+			} else{
 				nextFrag = 1;
+			}
 		}
 
 		if (!isDualPane) {
@@ -143,12 +145,11 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		android.app.FragmentTransaction ft = fm.beginTransaction();
 		if (fragment == 1) {
 			nextFrag = 0;
-			BeatFragment bf = new BeatFragment();
 			// Bundle args = new Bundle();
 			// dont have any args at the moment
 			// bf.setArguments(args);
 
-			ft.replace(R.id.fragment_container_one, bf);
+			ft.replace(R.id.fragment_container_one, beatPad);
 			ft.addToBackStack(null);
 			ft.commit();
 		} else if (fragment == 0) {
@@ -211,7 +212,12 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 		} else {
 			if (mp.isPlaying())
+			{
+				Log.d("TAG_ACTIVITY", "media player is playing, preparing to stop and release");
 				mp.stop();
+				mp.release();
+				mp = null;
+			}
 		}
 	}
 
@@ -231,23 +237,42 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		}
 	}
 
-	public void playMP3(MediaPlayer mp, int rid) {
+	public MediaPlayer playDefaultSound(MediaPlayer mp, int rid) {
 		if (mp == null) {
-
-		} else
+			return null;
+		}
 
 		if (mp.isPlaying()) {
-			return;
-		} else
-			mp.release();
+			return mp;
+		} 
 		try {
+			Log.d("TAG_ACTIVITY", "in default play");
 			mp = MediaPlayer.create(this, rid);
-
+			
 			// MediaPlayer mp = new MediaPlayer();
 			// mp.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()+"/serenity.mp3");
 			mp.setOnPreparedListener(this);
-			mp.prepare();
+			return mp;
+			//mp.prepare();
+			
+			
 		} catch (Exception e) {
+		}
+		return null;
+	}
+	
+	public void playCustomSound(MediaPlayer mp, String filename) {
+		if (mp == null) {
+
+		} else
+		{
+		try {
+			Log.d("TAG_ACTIVITY", "in custom play?");
+			mp.setDataSource(filename);
+			mp.prepare();
+			mp.start();
+		} catch (Exception e) {
+		}
 		}
 	}
 

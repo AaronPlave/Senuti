@@ -29,7 +29,7 @@ public class PlayFragment extends Fragment{
 	
 	
 	public interface PlayControllerListener {
-        public void setReverse(boolean dir);
+        public void setReverse(boolean d);
         public void setPitch(double sliderVal);
         public void play();
         public void pause();
