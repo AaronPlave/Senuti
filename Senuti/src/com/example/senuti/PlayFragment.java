@@ -1,6 +1,5 @@
 package com.example.senuti;
 
-
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
@@ -12,12 +11,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
-public class PlayFragment extends Fragment{
-
+public class PlayFragment extends Fragment {
 
 	PlayControllerListener callBack;
 	Button atPlay;
@@ -26,33 +25,39 @@ public class PlayFragment extends Fragment{
 	Switch atReverse;
 	SeekBar pitchSlider;
 	Button randomButton;
-	
-	
+	ProgressBar atLoadingSpinner;
+
 	public interface PlayControllerListener {
-        public void setReverse(boolean d);
-        public void setPitch(double sliderVal);
-        public void play();
-        public void pause();
-        public void random();
-        public void back();
-        public void chooseFileFromIntent();
-    }
-	
-	  @Override
-	    public void onAttach(Activity activity) {
-	        super.onAttach(activity);
-	        
-	        // This makes sure that the container activity has implemented
-	        // the callback interface. If not, it throws an exception
-	        try {
-	            callBack = (PlayControllerListener) activity;
-	        } catch (ClassCastException e) {
-	            throw new ClassCastException(activity.toString()
-	                    + " must implement OnHeadlineSelectedListener");
-	        }
-	    }
-	
-		@Override
+		public void setReverse(boolean d);
+
+		public void setPitch(double sliderVal);
+
+		public void play();
+
+		public void pause();
+
+		public void random();
+
+		public void back();
+
+		public void chooseFileFromIntent();
+	}
+
+	@Override
+	public void onAttach(Activity activity) {
+		super.onAttach(activity);
+
+		// This makes sure that the container activity has implemented
+		// the callback interface. If not, it throws an exception
+		try {
+			callBack = (PlayControllerListener) activity;
+		} catch (ClassCastException e) {
+			throw new ClassCastException(activity.toString()
+					+ " must implement OnHeadlineSelectedListener");
+		}
+	}
+
+	@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
 			
@@ -70,7 +75,12 @@ public class PlayFragment extends Fragment{
 					// Log.d("TAG_ACTIVITY","END OF SONGS");
 				}
 			});
-
+			
+			
+			//Bind the decoding loading spinner
+			atLoadingSpinner = (ProgressBar) rootView.findViewById(R.id.decodingSpinner);
+			atLoadingSpinner.setVisibility(View.GONE);
+			
 			
 			// Bind play AT file
 			atPlay = (Button) rootView.findViewById(R.id.btnAudioTrackPlay);
@@ -148,6 +158,8 @@ public class PlayFragment extends Fragment{
 				}
 			};
 
+	
+			
 	// set the listener on the slider
 	pitchSlider.setOnSeekBarChangeListener(listener);
 			
@@ -162,16 +174,19 @@ public class PlayFragment extends Fragment{
 			
 			return rootView;
 		}
-		
-		public void onCreate(Bundle savedInstanceState) {
-	    	// TODO Auto-generated method stub
-	    	super.onCreate(savedInstanceState);
-			// Bind the random button click
-			
-			
-			
+
+	public void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		// Bind the random button click
+
+	}
+	public void setLoading(boolean loading){
+		if (loading){
+			atLoadingSpinner.setVisibility(View.VISIBLE);
+		} else {
+			atLoadingSpinner.setVisibility(View.GONE);
 		}
-		
-		
-	
+	}
+
 }

@@ -51,6 +51,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	Button switchButton;
 	int nextFrag;
 	BeatFragment beatPad;
+	PlayFragment playFrag;
 
 	// TODO:LOCK ORIENTATION
 
@@ -73,28 +74,29 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		setContentView(R.layout.main);
 
 		// fill the screen with one or two fragments, depending on size of
-		// device. we used some layout aliases to maket his easier
+		// device. we used some layout aliases to make this easier
 
 		if (findViewById(R.id.fragment_container_one) != null) {
 			Log.d("TAG_ACTIVITY", "fragment container one not null");
 
 			// Create a new Fragment to be placed in the activity layout
-			PlayFragment pf = new PlayFragment();
+			playFrag = new PlayFragment();
+			// playFrag.setLoading(false);
 			beatPad = new BeatFragment();
 			// Add the fragment to the 'fragment_container' FrameLayout
 			getFragmentManager().beginTransaction()
-					.add(R.id.fragment_container_one, pf).commit();
+					.add(R.id.fragment_container_one, playFrag).commit();
 			View secondFrag = findViewById(R.id.fragment_container_two);
 
 			isDualPane = (secondFrag != null && secondFrag.getVisibility() == View.VISIBLE);
 
 			if (isDualPane) {
 				Log.d("TAG_ACTIVITY", "Dual pane mode.");
-				
+
 				getFragmentManager().beginTransaction()
 						.add(R.id.fragment_container_two, beatPad).commit();
 				Log.d("TAG_ACTIVITY", "added second fragment");
-			} else{
+			} else {
 				nextFrag = 1;
 			}
 		}
@@ -139,6 +141,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		atp.playSong(uri);
 	}
 
+	void setLoading(boolean loading) {
+		playFrag.setLoading(loading);
+	}
+
 	// this method lets you switch fragments within one pane back and forth
 	public void showFragment(int fragment) {
 		FragmentManager fm = getFragmentManager();
@@ -154,12 +160,12 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			ft.commit();
 		} else if (fragment == 0) {
 			nextFrag = 1;
-			PlayFragment pf = new PlayFragment();
+			// PlayFragment pf = new PlayFragment();
 
 			// dont have any args at the moment
 			// newFragment.setArguments(args);
 
-			ft.replace(R.id.fragment_container_one, pf);
+			ft.replace(R.id.fragment_container_one, playFrag);
 			ft.addToBackStack(null);
 			ft.commit();
 		}
@@ -211,9 +217,9 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		if (mp == null) {
 
 		} else {
-			if (mp.isPlaying())
-			{
-				Log.d("TAG_ACTIVITY", "media player is playing, preparing to stop and release");
+			if (mp.isPlaying()) {
+				Log.d("TAG_ACTIVITY",
+						"media player is playing, preparing to stop and release");
 				mp.stop();
 				mp.release();
 				mp = null;
@@ -244,35 +250,33 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 		if (mp.isPlaying()) {
 			return mp;
-		} 
+		}
 		try {
 			Log.d("TAG_ACTIVITY", "in default play");
 			mp = MediaPlayer.create(this, rid);
-			
+
 			// MediaPlayer mp = new MediaPlayer();
 			// mp.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath()+"/serenity.mp3");
 			mp.setOnPreparedListener(this);
 			return mp;
-			//mp.prepare();
-			
-			
+			// mp.prepare();
+
 		} catch (Exception e) {
 		}
 		return null;
 	}
-	
+
 	public void playCustomSound(MediaPlayer mp, String filename) {
 		if (mp == null) {
 
-		} else
-		{
-		try {
-			Log.d("TAG_ACTIVITY", "in custom play?");
-			mp.setDataSource(filename);
-			mp.prepare();
-			mp.start();
-		} catch (Exception e) {
-		}
+		} else {
+			try {
+				Log.d("TAG_ACTIVITY", "in custom play?");
+				mp.setDataSource(filename);
+				mp.prepare();
+				mp.start();
+			} catch (Exception e) {
+			}
 		}
 	}
 
@@ -372,34 +376,62 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			audioThread.clear();
 		};
 
-		// public List<String> getSongsOnDevice() {
-		//
-		// List<Item> mItems = new ArrayList<Item>();
-		//
-		// // Some audio may be explicitly marked as not being music
-		// String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-		//
-		// String[] projection = { MediaStore.Audio.Media._ID,
-		// MediaStore.Audio.Media.ARTIST,
-		// MediaStore.Audio.Media.TITLE,
-		// MediaStore.Audio.Media.DATA,
-		// MediaStore.Audio.Media.DISPLAY_NAME,
-		// MediaStore.Audio.Media.DURATION };
-		//
-		// Cursor cursor = getContentResolver().query(
-		// MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-		// projection, selection, null, null);
-		//
-		// List<String> songs = new ArrayList<String>();
-		// while (cursor.moveToNext()) {
-		// songs.add(cursor.getString(0) + "||" + cursor.getString(1)
-		// + "||" + cursor.getString(2) + "||"
-		// + cursor.getString(3) + "||" + cursor.getString(4)
-		// + "||" + cursor.getString(5));
-		// }
-		//
-		// return songs;
-		// };
+		public byte[] decode(InputStream inputStream, int startMs, int maxMs)
+				throws IOException {
+			ByteArrayOutputStream outStream = new ByteArrayOutputStream(1024);
+
+			float totalMs = 0;
+			boolean seeking = true;
+
+			try {
+				Bitstream bitstream = new Bitstream(inputStream);
+				Decoder decoder = new Decoder();
+
+				boolean done = false;
+				while (!done) {
+					Header frameHeader = bitstream.readFrame();
+					if (frameHeader == null) {
+						done = true;
+					} else {
+						totalMs += frameHeader.ms_per_frame();
+
+						if (totalMs >= startMs) {
+							seeking = false;
+						}
+
+						if (!seeking) {
+							// logger.debug("Handling header: " +
+							// frameHeader.layer_string());
+							SampleBuffer output = (SampleBuffer) decoder
+									.decodeFrame(frameHeader, bitstream);
+
+							if (output.getSampleFrequency() != 44100
+									|| output.getChannelCount() != 2) {
+								throw new IllegalArgumentException(
+										"mono or non-44100 MP3 not supported");
+							}
+
+							short[] pcm = output.getBuffer();
+							for (short s : pcm) {
+								outStream.write(s & 0xff);
+								outStream.write((s >> 8) & 0xff);
+							}
+						}
+
+						if (totalMs >= (startMs + maxMs)) {
+							done = true;
+						}
+					}
+					bitstream.closeFrame();
+				}
+
+				return outStream.toByteArray();
+			} catch (BitstreamException e) {
+				throw new IOException("Bitstream error: " + e);
+			} catch (DecoderException e) {
+				throw new IOException("Decoder error: " + e);
+			}
+		}
 
 		public void playSong(Uri song) {
 			// Check if audioThread is initialized
@@ -412,14 +444,16 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				Log.d("TAG_ACTIVITY", "RANDOM SONG == NULL");
 				return;
 			} else {
-				play();
-				Log.d("TAG_ACTIVITY", "NOT NULL?");
-				// Log.d("TAG_ACTIVITY", song.getTitle());
-				audioThread.TRACK = song;
+				// Async decode, set loading spinner, when done end spinner and
+				// call
+				// play audiotrack thread
+				DecodeMp3Thread task = new DecodeMp3Thread();
+				task.execute(song);
 			}
 		}
 
 		public void playRandomSong() {
+
 			// Check if audioThread is initialized
 			if (audioThread != null) {
 				audioThread.clear();
@@ -431,16 +465,137 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				Log.d("TAG_ACTIVITY", "RANDOM SONG == NULL");
 				return;
 			} else {
+				DecodeMp3Thread task = new DecodeMp3Thread();
+				task.execute(song);
+			}
+		}
+
+		private class DecodeMp3Thread extends AsyncTask<Uri, Void, String> {
+
+			@Override
+			protected void onPreExecute() {
+				setLoading(true);
+			}
+
+			@Override
+			protected String doInBackground(Uri... params) {
+				Uri TRACK = params[0];
+				if (TRACK == null) {
+					Log.d("TAG_ACTIVITY", "No track, returning");
+					return null;
+				}
+
+				Log.d("TAG_ACTIVITY", "Decoding " + TRACK.toString());
+
+				// Get inputstream from uri
+				Uri mp3URI = TRACK;
+
+				InputStream data;
+				try {
+					data = getContentResolver().openInputStream(mp3URI);
+				} catch (FileNotFoundException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+					return null;
+				}
+
+				Log.d("TAG_ACTIVITY", "DECODING MP3 TO WAV");
+				long start = System.currentTimeMillis();
+
+				// create new file
+				String path = Environment.getExternalStorageDirectory()
+						.getAbsolutePath() + "/test.wav";
+				File file = null;
+				FileOutputStream fos = null;
+				BufferedOutputStream bos = null;
+				try {
+					file = new File(path);
+					fos = new FileOutputStream(file);
+					bos = new BufferedOutputStream(fos);
+				}
+
+				catch (FileNotFoundException fnfe) {
+					Log.d("TAG_ACTIVITY", "FILE NOT FOUND" + fnfe);
+					return null;
+				}
+
+				// decode and write to file
+				Log.d("TAG_ACTIVITY", mp3URI.toString());
+
+				int ite = 44100;
+				try {
+					while (ite < data.available()) {
+						Log.d("TAG_ACTIVITY", "ITE = " + ite);
+						byte[] output = decode(data, 0, ite);
+						if (output == null) {
+							Log.d("TAG_ACTIVITY", "NULL OUTPUT, DONE HERE");
+							break;
+						} else {
+							// write to file
+							try {
+								bos.write(output);
+								Log.d("TAG_ACTIVITY", ""
+										+ (output.length / 44100) * 1000);
+								Log.d("TAG_ACTIVITY",
+										"data length " + data.available());
+							} catch (IOException e) {
+								break;
+							}
+						}
+					}
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+
+				// close the stream
+				try {
+					if (bos != null) {
+						bos.flush();
+						bos.close();
+					}
+				} catch (Exception e) {
+					System.out.println("Error while closing streams" + e);
+				}
+
+				// ----------------------------------
+
+				long end = System.currentTimeMillis();
+				long total = (end - start) / 1000;
+				Log.d("TAG_ACTIVITY", "DECODING TIME = " + Long.toString(total));
+
+				// TODO: Run decode on only a portion of the song so that
+				// playback can begin instantly
+				// Then, get the rest (on a separate thread?) and feed back
+				// somehow or maybe write
+				// to a file? Probably not the file. This does make seeking much
+				// harder/impossible
+				// while the song is being decoded, but could just only let you
+				// seek up to the place
+				// where the buffer has loaded? That could work.
+
+				// TODO: Use a thread in the background prepare the next song.
+				return path;
+			}
+
+			@Override
+			protected void onPostExecute(String song) {
+				setLoading(false);
+				if (song == null) {
+					Log.d("TAG_ACTIVITY", "NO SONG FROM DECODE!");
+					return;
+				}
 				play();
-				Log.d("TAG_ACTIVITY", "NOT NULL?");
+				Log.d("TAG_ACTIVITY", "SUCCESSFUL DECODING, NOW PLAY");
 				// Log.d("TAG_ACTIVITY", song.getTitle());
 				audioThread.TRACK = song;
+
 			}
 		}
 
 		private class AudioThread extends Thread {
 
-			Uri TRACK;
+			String TRACK;
 			boolean ALIVE = true;
 			boolean PLAYING = false;
 			boolean PAUSED = false;
@@ -473,12 +628,13 @@ public class MainActivity extends Activity implements OnPreparedListener,
 							}
 						}
 					}
-					prepareAndPlayTrack(TRACK);
+					play(TRACK);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 
+			// max of the pitch offset (from 0%)
 			double MAX_OFFSET = 80000.0;
 
 			public void setPitchOffset(double p) {
@@ -512,13 +668,12 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				at.flush();
 				// // if reversed, set to end of song, else set to beginning
 				if (REVERSE) {
-					Log.d("TAG_ACTIVITY","TrackLength = " +TRACKLENGTH );
-					position = TRACKLENGTH-count;
+					// Log.d("TAG_ACTIVITY","TrackLength = " +TRACKLENGTH );
+					position = TRACKLENGTH - count;
 				} else {
 					ra.seek(0);
 					position = 0;
 				}
-				// //
 				at.play();
 				PAUSED = wasPaused;
 			}
@@ -535,7 +690,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			// This function reverses the frames in a byte array, assumes frames
 			// are 4 bytes long
 			public void reverseFrames(byte[] audio) {
-				for (int i = 0; i <= (count/8)-1; i++) {
+				for (int i = 0; i <= (count / 8) - 1; i++) {
 					// the log calculations is to calculate how many swaps are
 					// needed in a count sized array
 					for (int j = 0; j < 4; j++) {
@@ -573,205 +728,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				}
 			}
 
-			public byte[] decode(InputStream inputStream, int startMs, int maxMs)
-					throws IOException {
-				ByteArrayOutputStream outStream = new ByteArrayOutputStream(
-						1024);
-
-				float totalMs = 0;
-				boolean seeking = true;
-
-				try {
-					Bitstream bitstream = new Bitstream(inputStream);
-					Decoder decoder = new Decoder();
-
-					boolean done = false;
-					while (!done) {
-						Header frameHeader = bitstream.readFrame();
-						if (frameHeader == null) {
-							done = true;
-						} else {
-							totalMs += frameHeader.ms_per_frame();
-
-							if (totalMs >= startMs) {
-								seeking = false;
-							}
-
-							if (!seeking) {
-								// logger.debug("Handling header: " +
-								// frameHeader.layer_string());
-								SampleBuffer output = (SampleBuffer) decoder
-										.decodeFrame(frameHeader, bitstream);
-
-								if (output.getSampleFrequency() != 44100
-										|| output.getChannelCount() != 2) {
-									throw new IllegalArgumentException(
-											"mono or non-44100 MP3 not supported");
-								}
-
-								short[] pcm = output.getBuffer();
-								for (short s : pcm) {
-									outStream.write(s & 0xff);
-									outStream.write((s >> 8) & 0xff);
-								}
-							}
-
-							if (totalMs >= (startMs + maxMs)) {
-								done = true;
-							}
-						}
-						bitstream.closeFrame();
-					}
-
-					return outStream.toByteArray();
-				} catch (BitstreamException e) {
-					throw new IOException("Bitstream error: " + e);
-				} catch (DecoderException e) {
-					throw new IOException("Decoder error: " + e);
-				}
-			}
-
-			public void prepareAndPlayTrack(Uri TRACK) throws IOException {
-				if (TRACK == null) {
-					Log.d("TAG_ACTIVITY", "No track, returning");
-					return;
-				}
-
-				if (at == null) {
-					Log.d("TAG_ACTIVITY", "audio track is not initialized ");
-					return;
-				}
-				Log.d("TAG_ACTIVITY", "IN PLAY");
-				Log.d("TAG_ACTIVITY", TRACK.toString());
-
-				// Reading the file..
-				// InputStream in1 = getResources().openRawResource(
-				// R.raw.warmwater);
-				//
-				// byte[] music1 = null;
-				// try {
-				// music1 = new byte[in1.available()];
-				// music1 = convertStreamToByteArray(in1);
-				// in1.close();
-				// } catch (IOException e) {
-				// e.printStackTrace();
-				// }
-
-				// InputStream data2 =
-				// getResources().openRawResource(R.raw.levels);
-
-				// Get inputstream from uri
-				Uri mp3URI = TRACK;
-				if (mp3URI == null)
-					return;
-				InputStream data = getContentResolver().openInputStream(mp3URI);
-
-				// File dataFile = new File(mp3URI.getPath()+".mp3");
-				// long dataSize = (long) dataFile.length();
-				// Log.d("TAG_ACTIVITY","IS FILE?!"+dataFile.isFile());
-
-				Log.d("TAG_ACTIVITY", "DECODING MP3 TO WAV");
-				long start = System.currentTimeMillis();
-
-				// Method to decode all data at once, return the entire byte
-				// array
-				// byte[] output2 = decode(data, 0, Integer.MAX_VALUE);
-
-				// ----------------------------------
-				// Method to decode the data in chunks and write the chunks to
-				// file as they are decoded.
-
-				// create new file
-				String path = Environment.getExternalStorageDirectory()
-						.getAbsolutePath() + "/test.wav";
-				File file = null;
-				FileOutputStream fos = null;
-				BufferedOutputStream bos = null;
-				try {
-					file = new File(path);
-					fos = new FileOutputStream(file);
-					bos = new BufferedOutputStream(fos);
-				}
-
-				catch (FileNotFoundException fnfe) {
-					Log.d("TAG_ACTIVITY", "FILE NOT FOUND" + fnfe);
-					return;
-				}
-
-				// decode and write to file
-				// Log.d("TAG_ACTIVITY", "available=" + dataFile.isFile());
-				Log.d("TAG_ACTIVITY", mp3URI.toString());
-
-				int ite = 44100;
-				// int chunkSize = 1024;
-				// int iterSize = 0;
-				// int sum = 0;
-				Log.d("TAG_ACTIVITY", "data length " + data.available());
-				while (ite < data.available()) {
-					Log.d("TAG_ACTIVITY", "ITE = " + ite);
-					byte[] output = decode(data, 0, ite);
-					if (output == null) {
-						Log.d("TAG_ACTIVITY", "NULL OUTPUT, DONE HERE");
-						break;
-					} else {
-						// write to file
-						try {
-							// Log.d("TAG_ACTIVITY", "decoding from = " + ite +
-							// " to "+(ite+chunkSize));
-							// Log.d("TAG_ACTIVITY", "outLen = " +
-							// output.length);
-							bos.write(output);
-							Log.d("TAG_ACTIVITY", "" + (output.length / 44100)
-									* 1000);
-							// sum += chunkSize;
-							Log.d("TAG_ACTIVITY",
-									"data length " + data.available());
-							// Log.d("TAG_ACTIVITY", "ITE = "+ite);
-							// ite = outLen;
-
-						} catch (IOException e) {
-							break;
-						}
-					}
-				}
-
-				// Log.d("TAG_ACTIVITY", "sum "+sum);
-				Log.d("TAG_ACTIVITY", "data length " + data.available());
-
-				// byte[] output2 = decode(data, 0, 1);
-
-				// close the stream
-				try {
-					if (bos != null) {
-						bos.flush();
-						bos.close();
-					}
-				} catch (Exception e) {
-					System.out.println("Error while closing streams" + e);
-				}
-
-				// ----------------------------------
-
-				long end = System.currentTimeMillis();
-				long total = (end - start) / 1000;
-				Log.d("TAG_ACTIVITY", "DECODING TIME = " + Long.toString(total));
-
-				// TODO: Run decode on only a portion of the song so that
-				// playback can begin instantly
-				// Then, get the rest (on a separate thread?) and feed back
-				// somehow or maybe write
-				// to a file? Probably not the file. This does make seeking much
-				// harder/impossible
-				// while the song is being decoded, but could just only let you
-				// seek up to the place
-				// where the buffer has loaded? That could work.
-
-				// TODO: Use a thread in the background prepare the next song.
-
-				// byte[] output = new byte[music1.length];
-				play(path);
-			}
-
 			public void play(String path) throws IOException {
 				int count = 512; // 512 kb
 				// Reading the file..
@@ -787,7 +743,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					e.printStackTrace();
 				}
 
-
 				int ret = 0;
 				int size = (int) file.length();
 				at.play();
@@ -796,8 +751,14 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				TRACKLENGTH = size;
 				boolean continuePlaying = true;
 				while (continuePlaying) {
-
-					if (!(position <= size && position >= 0)){
+					if (CLEAR) {
+						Log.d("TAG_ACTIVITY", "CLEAR");
+						at.stop();
+						at.release();
+						return;
+					}
+					
+					if (!(position <= size && position >= 0)) {
 						PAUSED = true;
 					}
 					// check paused
@@ -826,7 +787,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 						at.setPlaybackRate(44100 + PITCHOFFSET);
 						at.write(byteData, 0, ret);
-//						Log.d("TAG_ACTIVITY", Integer.toString(position));
+						// Log.d("TAG_ACTIVITY", Integer.toString(position));
 
 					} else
 						break;
