@@ -774,7 +774,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 			public void play(String path) throws IOException {
 				int count = 512; // 512 kb
-				int position = 0;
 				// Reading the file..
 				byte[] byteData = null;
 				File file = null;
@@ -788,12 +787,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					e.printStackTrace();
 				}
 
-				// try {
-				// in = new FileInputStream(file);
-				//
-				// } catch (FileNotFoundException e) {
-				// e.printStackTrace();
-				// }
 
 				int ret = 0;
 				int size = (int) file.length();
@@ -812,10 +805,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 						continue;
 					}
 
-
 					try {
 						if (REVERSE) {
 							ra.seek(position); // IS COUNT = RET SIZE?
+							Log.d("TAG_ACTIVITY", Integer.toString(position));
 						}
 						ret = ra.read(byteData, 0, count);
 					} catch (IOException e) {
