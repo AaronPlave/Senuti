@@ -58,7 +58,7 @@
                 android:progress="50" />
         </LinearLayout>
 
-        <!-- Reverse Toggle and Random Effects Checkbox -->
+        <!-- Reverse Toggle -->
 
         <LinearLayout
             android:id="@+id/LinearLayout04"
@@ -70,13 +70,9 @@
             <Switch
                 android:id="@+id/toggleReverse"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="match_parent"
+                android:text="Reverse" />
 
-            <CheckBox
-                android:id="@+id/checkBox1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Random Effects" />
         </LinearLayout>
 
         <!-- Seek Bar -->
@@ -111,7 +107,6 @@
                 android:layout_height="wrap_content"
                 android:progress="0"
                 android:visibility="visible" />
-
         </LinearLayout>
 
         <!-- Music Controls -->
@@ -164,7 +159,6 @@
                 android:layout_height="wrap_content"
                 android:text="Random" />
         </LinearLayout>
-
     </LinearLayout>
 
     <!--

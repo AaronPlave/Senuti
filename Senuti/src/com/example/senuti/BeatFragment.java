@@ -113,15 +113,15 @@ public class BeatFragment extends Fragment {
 
 				 
 				 //create items that hold all the invformation
-				 items.add(new BeatItem(buttons.get(0),new MediaPlayer(), "1", new MediaRecorder(),R.raw.levels));
-				 items.add(new BeatItem(buttons.get(1),new MediaPlayer(), "2", new MediaRecorder(),R.raw.levels));
-				 items.add(new BeatItem(buttons.get(2),new MediaPlayer(), "3", new MediaRecorder(),R.raw.levels));
-				 items.add(new BeatItem(buttons.get(3),new MediaPlayer(), "4", new MediaRecorder(),R.raw.levels));
-				 items.add(new BeatItem(buttons.get(4),new MediaPlayer(), "5", new MediaRecorder(),R.raw.levels));
-				 items.add(new BeatItem(buttons.get(5),new MediaPlayer(), "6", new MediaRecorder(),R.raw.levels));
-				 items.add(new BeatItem(buttons.get(6),new MediaPlayer(), "7", new MediaRecorder(),R.raw.levels));
-				 items.add(new BeatItem(buttons.get(7),new MediaPlayer(), "8", new MediaRecorder(),R.raw.levels));
-				 items.add(new BeatItem(buttons.get(8),new MediaPlayer(), "9", new MediaRecorder(),R.raw.levels));
+				 items.add(new BeatItem(buttons.get(0),new MediaPlayer(), "1", new MediaRecorder(),R.raw.sound1));
+				 items.add(new BeatItem(buttons.get(1),new MediaPlayer(), "2", new MediaRecorder(),R.raw.sound2));
+				 items.add(new BeatItem(buttons.get(2),new MediaPlayer(), "3", new MediaRecorder(),R.raw.sound3));
+				 items.add(new BeatItem(buttons.get(3),new MediaPlayer(), "4", new MediaRecorder(),R.raw.sound4));
+				 items.add(new BeatItem(buttons.get(4),new MediaPlayer(), "5", new MediaRecorder(),R.raw.sound5));
+				 items.add(new BeatItem(buttons.get(5),new MediaPlayer(), "6", new MediaRecorder(),R.raw.sound6));
+				 items.add(new BeatItem(buttons.get(6),new MediaPlayer(), "7", new MediaRecorder(),R.raw.sound7));
+				 items.add(new BeatItem(buttons.get(7),new MediaPlayer(), "8", new MediaRecorder(),R.raw.sound8));
+				 items.add(new BeatItem(buttons.get(8),new MediaPlayer(), "9", new MediaRecorder(),R.raw.sound9));
 				 //for now, just puts in the same song saved 9 times as the sound. 
 				 for (int i = 0; i < buttons.size(); i++)
 				 {
@@ -141,42 +141,46 @@ public class BeatFragment extends Fragment {
 			
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
+				Button b = item.getButton();
 				if(editing)
 				{
 					//when editing, start recording sound on touch, stop on touch release
 					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						b.setPressed(true);
 						if(!recording)
 						{
 							startRecording(item);
 							recording = true;
-							return true;
+							
 						}
 					}else
 						if(event.getAction() == MotionEvent.ACTION_UP){
+							b.setPressed(false);
 							stopRecording(item);
 							recording = false;
-							return true;
+							
 						}
-					return false;
 				}else
 				{
 					//when not editing, play sound on touch, stop playing on release
 					if (event.getAction() == MotionEvent.ACTION_DOWN) {
+						b.setPressed(true);
 						 if(item.getId()==15)
 						 {
 							 mCallback.playCustomSound(item.getPlayer(), item.getFileName());
-							 return true;
+							
 						 }else
 						 {
 							 item.setPlayer(mCallback.playDefaultSound(item.getPlayer(), item.getId()));
-							 return true;
+							
 						 }
 					 } else if (event.getAction() == MotionEvent.ACTION_UP) {
-						 Log.d("TAG_ACTIVITY", "TOUCH RELEASED, levels should stop now...");
+						 b.setPressed(false);
 						 MediaPlayer player = item.getPlayer();
 					// mCallback.stopMP3(player);//stopMP3 calls mp. release
 					 if(item.getPlayer()!=null)
 					 {
+						 
 						 if(player.isPlaying())
 						 {
 							 Log.d("TAG_ACTIVITY", "really, telling it to stop");
@@ -189,9 +193,10 @@ public class BeatFragment extends Fragment {
 					 {
 						 Log.d("TAG_ACTIVITY", "null media player?");
 					 }
-					 return true;
+					 
 					 }
 				}
+				item.setButton(b);
 				return false;
 			}
 		});
@@ -269,6 +274,11 @@ public class BeatFragment extends Fragment {
 		public Button getButton()
 		{
 			return button;
+		}
+		
+		public void setButton(Button b)
+		{
+			button = b;
 		}
 		
 		public void setPlayer(MediaPlayer m)

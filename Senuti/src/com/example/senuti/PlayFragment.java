@@ -27,6 +27,7 @@ public class PlayFragment extends Fragment {
 	SeekBar pitchSlider;
 	Button randomButton;
 	ProgressBar atDecodeProgress;
+	SeekBar atSongProgress;
 	TextView atPitchOffsetLabel;
 	TextView atTitle;
 
@@ -34,7 +35,7 @@ public class PlayFragment extends Fragment {
 		public void setReverse(boolean d);
 
 		public void setPitch(double sliderVal);
-
+		
 		public void play();
 
 		public void pause();
@@ -48,6 +49,8 @@ public class PlayFragment extends Fragment {
 		public boolean checkSongReady();
 
 		public boolean isPlaying();
+
+		public void seek(double sliderval);
 
 	}
 
@@ -83,6 +86,8 @@ public class PlayFragment extends Fragment {
 				// Log.d("TAG_ACTIVITY","END OF SONGS");
 			}
 		});
+		
+		
 
 		// Bind title
 		atTitle = (TextView) rootView.findViewById(R.id.songTitle);
@@ -92,11 +97,40 @@ public class PlayFragment extends Fragment {
 				.findViewById(R.id.pitchOffsetLabel);
 		atPitchOffsetLabel.setText("Pitch Offset: 0%");
 
+		Log.d("TAG_ACTIVITY","GOT HERE 2");
+		// bind song progress bar
+		atSongProgress = (SeekBar) rootView.findViewById(R.id.seekBar);
+
+		// create a listener for the slider bar;
+		OnSeekBarChangeListener progressListener = new OnSeekBarChangeListener() {
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
+
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+
+			public void onProgressChanged(SeekBar seekBar, int progress,
+					boolean fromUser) {
+				if (fromUser) {
+					double sliderval;
+					Log.d("TAG_ACTIVITY", Integer.toString(progress));
+					sliderval = progress / (double) seekBar.getMax();
+					Log.d("TAG_ACTIVITY", Double.toString(sliderval));
+					callBack.seek(sliderval);
+
+				}
+			}
+		};
+		Log.d("TAG_ACTIVITY","GOT HERE 3");
+
+		// set the listener on the slider
+		atSongProgress.setOnSeekBarChangeListener(progressListener);
+		Log.d("TAG_ACTIVITY","GOT HERE 1");
+
 		// Bind the decoding loading spinner
 		atDecodeProgress = (ProgressBar) rootView
 				.findViewById(R.id.atDecodeProgress);
 		atDecodeProgress.setVisibility(View.INVISIBLE);
-		
 
 		// Bind play/pause AT button
 		atPlay = (Button) rootView.findViewById(R.id.btnAudioTrackPlay);
@@ -216,6 +250,10 @@ public class PlayFragment extends Fragment {
 
 	public void setDecodeProgress(int prog) {
 		atDecodeProgress.setProgress(prog);
+	}
+
+	public void setSongProgress(int prog) {
+		atSongProgress.setProgress(prog);
 	}
 
 	public void enableReverseSwitch(boolean s) {

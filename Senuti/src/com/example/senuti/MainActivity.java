@@ -56,7 +56,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	BeatFragment beatPad;
 	PlayFragment playFrag;
 	boolean songReady = false;
-	
 
 	// TODO:LOCK ORIENTATION
 
@@ -141,13 +140,17 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	// ////
 
 	// /////
+	Toast toast;
 
 	public void makeToast(String str) {
 		Context context = getApplicationContext();
 		CharSequence text = str;
 		int duration = Toast.LENGTH_LONG;
 
-		Toast toast = Toast.makeText(context, text, duration);
+		if (toast != null) {
+			toast.cancel();
+		}
+		toast = Toast.makeText(context, text, duration);
 		toast.show();
 	}
 
@@ -200,6 +203,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 	void setDecodeProgress(int prog) {
 		playFrag.setDecodeProgress(prog);
+	}
+
+	void setSongProgress(int prog) {
+		playFrag.setSongProgress(prog);
 	}
 
 	void setLoading(boolean loading) {
@@ -324,6 +331,17 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 	public void pause() {
 		atp.pause();
+	}
+
+	public void seek(double sliderval) {
+		if (atp == null) {
+			return;
+		}
+		if (!(songReady)) {
+			return;
+		} else {
+			atp.setPosition(sliderval);
+		}
 	}
 
 	public void setPitch(double sliderVal) {
@@ -454,6 +472,13 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			audioThread.back();
 		}
 
+		public void setPosition(double p) {
+			if (audioThread == null) {
+				return;
+			}
+			audioThread.setPosition(p);
+		}
+
 		public void setPitch(double p) {
 			if (audioThread == null) {
 				return;
@@ -548,21 +573,23 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				throw new IOException("Decoder error: " + e);
 			}
 		}
-		
+
 		DecodeMp3Thread task;
-		
+
 		public boolean cancelDecode() {
+			enableReverseSwitch(true);
 			return task.cancel(true);
+
 		}
-		
+
 		public void playSong(Uri song) {
 			// Check if audioThread is initialized
 			if (audioThread != null) {
 				audioThread.clear();
 				audioThread = null;
 			}
-			
-			if (task != null){
+
+			if (task != null) {
 				cancelDecode();
 			}
 
@@ -575,7 +602,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				task.execute(song);
 			}
 		}
-		
 
 		public void playRandomSong() {
 
@@ -584,8 +610,8 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				audioThread.clear();
 				audioThread = null;
 			}
-			
-			if (task != null){
+
+			if (task != null) {
 				cancelDecode();
 			}
 
@@ -823,6 +849,20 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				}
 			}
 
+			public void setPosition(double p){
+				if (p <= 0.05){
+					position = 0;
+					return;
+				}
+				if (p > 1){
+					p = 1;
+				}
+				position = (int) (((float) p * (float) TRACKLENGTH)); 
+				Log.d("TAG_ACTIVITY","TRACKLENGTH = "+TRACKLENGTH);
+				Log.d("TAG_ACTIVITY","P =  "+p);
+				Log.d("TAG_ACTIVITY","POSITION SET TO "+position);
+			}
+
 			// max of the pitch offset (from 0%)
 			double MAX_OFFSET = 88200.0;
 
@@ -856,8 +896,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 				boolean wasPaused = audioThread.PAUSED;
 				PAUSED = true;
-				at.stop();
-				at.flush();
+
 				// // if reversed, set to end of song, else set to beginning
 				if (REVERSE) {
 					// Log.d("TAG_ACTIVITY","TrackLength = " +TRACKLENGTH );
@@ -866,7 +905,11 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					ra.seek(0);
 					position = 0;
 				}
-				at.play();
+				if (at != null) {
+					at.stop();
+					at.flush();
+					at.play();
+				}
 				PAUSED = wasPaused;
 			}
 
@@ -989,10 +1032,20 @@ public class MainActivity extends Activity implements OnPreparedListener,
 						at.setPlaybackRate(44100 + PITCHOFFSET);
 						at.write(byteData, 0, ret);
 						setPlaying(true);
-						// Log.d("TAG_ACTIVITY", Integer.toString(position));
 
-					} else
+						setSongProgress((int) ((((float) position / (float) size)) * 100));
+						Log.d("TAG_ACTIVITY", "Pos " + position);
+						Log.d("TAG_ACTIVITY", "Size" + size);
+
+						Log.d("TAG_ACTIVITY",
+								""
+										+ (int) ((((float) position / (float) size)) * 100));
+
+					} else {
+						Log.d("TAG_ACTIVITY", "BREAKING FROM SONG");
 						break;
+					}
+
 				}
 				try {
 					ra.close();
@@ -1005,6 +1058,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			}
 		}
 	}
+
 }
 
 // TODO: show song progress and move seek bar (READ ONLY)
