@@ -108,6 +108,10 @@ public class MusicRetriever {
         return mItems.get(mRandom.nextInt(mItems.size()));
     }
     
+    public int getMediaSize() {
+    	return mItems.size();
+    }
+    
 
     public static class Item {
         long id;

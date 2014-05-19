@@ -121,11 +121,9 @@ public class PlayFragment extends Fragment {
 				}
 			}
 		};
-		Log.d("TAG_ACTIVITY","GOT HERE 3");
 
 		// set the listener on the slider
 		atSongProgress.setOnSeekBarChangeListener(progressListener);
-		Log.d("TAG_ACTIVITY","GOT HERE 1");
 
 		// Bind the decoding loading spinner
 		atDecodeProgress = (ProgressBar) rootView

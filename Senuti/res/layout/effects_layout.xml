@@ -7,8 +7,7 @@
     <LinearLayout
         android:id="@+id/wrapper"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.1"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:weightSum="1" >
 
@@ -42,12 +41,12 @@
 
             <TextView
                 android:id="@+id/pitchOffsetLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:padding="5dp"
                 android:text="Pitch Offset: 0%"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="#ffffff" />
+                android:textAppearance="?android:attr/textAppearanceSmall" />
 
             <SeekBar
                 android:id="@+id/pitchSlider"
@@ -72,7 +71,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:text="Reverse" />
-
         </LinearLayout>
 
         <!-- Seek Bar -->
@@ -81,15 +79,26 @@
             android:id="@+id/LinearLayout05"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="0.15"
             android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/progressLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="5dp"
+                android:text="Progress"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
 
             <SeekBar
                 android:id="@+id/seekBar"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:padding="20dp"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
                 android:progress="0" />
+
         </LinearLayout>
 
         <!-- Decoding loading progress bar -->
@@ -142,10 +151,26 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/LinearLayout07"
+            android:id="@+id/LinearLayout07a"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="0.22" >
+            android:layout_weight="0.03"
+            android:gravity="center" >
+
+            <TextView
+                android:id="@+id/songSelection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Song Selection"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/LinearLayout07b"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center" >
 
             <Button
                 android:id="@+id/btnChoose"

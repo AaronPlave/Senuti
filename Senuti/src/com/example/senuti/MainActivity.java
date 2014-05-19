@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
@@ -56,6 +58,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	BeatFragment beatPad;
 	PlayFragment playFrag;
 	boolean songReady = false;
+	List<Uri> blackListedSongs = new ArrayList();
 
 	// TODO:LOCK ORIENTATION
 
@@ -268,9 +271,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		switch (requestCode) {
 		case ACTIVITY_CHOOSE_FILE: {
 			if (resultCode == RESULT_OK) {
-				Log.d("TAG_ACTIVITY", "CHECK1");
 				Uri uri = data.getData();
-				Log.d("TAG_ACTIVITY", "CHECK2");
 
 				// now try to get the name of the mp3 file
 				String path = getRealPathFromURI(getApplicationContext(), uri);
@@ -279,6 +280,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				if (pos == -1) {
 					Log.d("TAG_ACTIVITY", "NO /");
 					makeToast("Unable to open " + path);
+					blackListedSongs.add(uri);
 					return;
 				}
 				String filename = path.substring(pos, path.length());
@@ -286,12 +288,15 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					Log.d("TAG_ACTIVITY",
 							"NO . extension in filename, unable to open");
 					makeToast("Unable to open " + path);
+					blackListedSongs.add(uri);
 					return;
 				}
 				String[] splits = filename.split("\\.");
 				Log.d("TAG_ACTIVITY", splits[0]);
 				if (splits.length != 2) {
 					Log.d("TAG_ACTIVITY", "SPLITS != 2" + splits[0] + splits[1]);
+					blackListedSongs.add(uri);
+					return;
 				} else {
 					Log.d("TAG_ACTIVITY", "CHECK5");
 					String extention = splits[1];
@@ -303,6 +308,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 								"INVALID FILE TYPE, TRY AGAIN, FILETYPE = "
 										+ extention);
 						makeToast("Please select a song in mp3 format");
+						blackListedSongs.add(uri);
 						return;
 					} else {
 						String songTitle = splits[0];
@@ -603,8 +609,8 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			}
 		}
 
+		// TODO: maybe make this async since it could potentially take time?
 		public void playRandomSong() {
-
 			// Check if audioThread is initialized
 			if (audioThread != null) {
 				audioThread.clear();
@@ -617,50 +623,101 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 			com.example.MusicRetriever.MusicRetriever.Item song = mRetriever
 					.getRandomItem();
+
+			int numberSongs = mRetriever.getMediaSize();
+			Log.d("TAG_ACTIVITY", "NUM SONGS = " + numberSongs);
 			Uri songUri = song.getURI();
-			Log.d("TAG_ACTIVITY", "SONG TITLE = " + song.getTitle());
-			if (songUri == null) {
-				Log.d("TAG_ACTIVITY", "RANDOM SONG == NULL");
-				return;
-			} else {
-				// CHECK VALID FILE
-				// TODO: repeated code, put into function...
-				// now try to get the name of the mp3 file
-				String path = getRealPathFromURI(getApplicationContext(),
-						songUri);
-				int pos = path.lastIndexOf("/") + 1;
-				Log.d("TAG_ACTIVITY", "" + pos + " " + path);
-				if (pos == -1) {
-					Log.d("TAG_ACTIVITY", "NO /");
-					return;
-				}
-				String filename = path.substring(pos, path.length());
-				if (filename.lastIndexOf(".") == -1) {
-					Log.d("TAG_ACTIVITY",
-							"NO . extension in filename, unable to open");
-					return;
-				}
-				String[] splits = filename.split("\\.");
-				Log.d("TAG_ACTIVITY", splits[0]);
-				if (splits.length != 2) {
-					Log.d("TAG_ACTIVITY", "SPLITS != 2" + splits[0] + splits[1]);
-				} else {
-					Log.d("TAG_ACTIVITY", "CHECK5");
-					String extention = splits[1];
-					String mp3String = "mp3";
-					Log.d("TAG_ACTIVITY", "FILETYPE = " + extention);
-					if (!(extention.equals(mp3String))) {
-						// TODO: make this into a toast!
-						Log.d("TAG_ACTIVITY",
-								"INVALID FILE TYPE, TRY AGAIN, FILETYPE = "
-										+ extention);
-						makeToast("Please try again, 'random' chose a wav file...");
+
+			boolean found = false;
+
+			while (!(found)) {
+
+				// if in blacklist, recurse and try again. If we see everything
+				// in
+				// the
+				if (blackListedSongs.contains(songUri)) {
+					Log.d("TAG_ACTIVITY", "BLACKLISTED SONG" + songUri);
+					// if blacklistedsongs contains all possible songs, return,
+					// nothing to play
+					if (blackListedSongs.size() == numberSongs) {
+						makeToast("No mp3 files found on your device");
 						return;
 					} else {
-						Log.d("TAG_ACTIVITY", "SONG TITLE = " + song.getTitle());
-						setSongTitle(song.getTitle());
-						task = new DecodeMp3Thread();
-						task.execute(songUri);
+						song = mRetriever
+								.getRandomItem();
+						songUri = song.getURI();
+						continue;
+					}
+				}
+
+				Log.d("TAG_ACTIVITY", "SONG TITLE = " + song.getTitle());
+				if (songUri == null) {
+					Log.d("TAG_ACTIVITY", "RANDOM SONG == NULL");
+					blackListedSongs.add(songUri);
+					//TODO: this probably needs some more thinking through...
+					song = mRetriever
+							.getRandomItem();
+					songUri = song.getURI();
+					continue;
+				} else {
+					// CHECK VALID FILE
+					// TODO: repeated code, put into function...
+					// now try to get the name of the mp3 file
+					String path = getRealPathFromURI(getApplicationContext(),
+							songUri);
+					int pos = path.lastIndexOf("/") + 1;
+					Log.d("TAG_ACTIVITY", "" + pos + " " + path);
+					if (pos == -1) {
+						Log.d("TAG_ACTIVITY", "NO /");
+						blackListedSongs.add(songUri);
+						song = mRetriever
+								.getRandomItem();
+						songUri = song.getURI();
+						continue;
+					}
+					String filename = path.substring(pos, path.length());
+					if (filename.lastIndexOf(".") == -1) {
+						Log.d("TAG_ACTIVITY",
+								"NO . extension in filename, unable to open");
+						blackListedSongs.add(songUri);
+						song = mRetriever
+								.getRandomItem();
+						songUri = song.getURI();
+						continue;
+					}
+					String[] splits = filename.split("\\.");
+					Log.d("TAG_ACTIVITY", splits[0]);
+					if (splits.length != 2) {
+						Log.d("TAG_ACTIVITY", "SPLITS != 2" + splits[0]
+								+ splits[1]);
+						blackListedSongs.add(songUri);
+						song = mRetriever
+								.getRandomItem();
+						songUri = song.getURI();
+						continue;
+					} else {
+						Log.d("TAG_ACTIVITY", "CHECK5");
+						String extention = splits[1];
+						String mp3String = "mp3";
+						Log.d("TAG_ACTIVITY", "FILETYPE = " + extention);
+						if (!(extention.equals(mp3String))) {
+							// TODO: make this into a toast!
+							Log.d("TAG_ACTIVITY",
+									"INVALID FILE TYPE, TRY AGAIN, FILETYPE = "
+											+ extention);
+							blackListedSongs.add(songUri);
+							song = mRetriever
+									.getRandomItem();
+							songUri = song.getURI();
+							continue;
+						} else {
+							Log.d("TAG_ACTIVITY",
+									"SONG TITLE = " + song.getTitle());
+							setSongTitle(song.getTitle());
+							task = new DecodeMp3Thread();
+							task.execute(songUri);
+							found = true;
+						}
 					}
 				}
 
@@ -849,18 +906,32 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				}
 			}
 
-			public void setPosition(double p){
-				if (p <= 0.05){
-					position = 0;
-					return;
+			public void setPosition(double p) {
+
+				boolean wasPaused = audioThread.PAUSED;
+				PAUSED = true;
+
+				position = (int) (((float) p * (float) TRACKLENGTH));
+				Log.d("TAG_ACTIVITY", "TRACKLENGTH = " + TRACKLENGTH);
+				Log.d("TAG_ACTIVITY", "P =  " + p);
+				Log.d("TAG_ACTIVITY", "POSITION SET TO " + position);
+
+				if (at != null) {
+					at.pause();
+					at.flush();
 				}
-				if (p > 1){
-					p = 1;
+
+				try {
+					ra.seek(position);
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-				position = (int) (((float) p * (float) TRACKLENGTH)); 
-				Log.d("TAG_ACTIVITY","TRACKLENGTH = "+TRACKLENGTH);
-				Log.d("TAG_ACTIVITY","P =  "+p);
-				Log.d("TAG_ACTIVITY","POSITION SET TO "+position);
+				if (at != null) {
+					at.play();
+				}
+
+				PAUSED = wasPaused;
+
 			}
 
 			// max of the pitch offset (from 0%)
@@ -1034,12 +1105,12 @@ public class MainActivity extends Activity implements OnPreparedListener,
 						setPlaying(true);
 
 						setSongProgress((int) ((((float) position / (float) size)) * 100));
-						Log.d("TAG_ACTIVITY", "Pos " + position);
-						Log.d("TAG_ACTIVITY", "Size" + size);
+						// Log.d("TAG_ACTIVITY", "Pos " + position);
+						// Log.d("TAG_ACTIVITY", "Size" + size);
 
-						Log.d("TAG_ACTIVITY",
-								""
-										+ (int) ((((float) position / (float) size)) * 100));
+						// Log.d("TAG_ACTIVITY",
+						// ""
+						// + (int) ((((float) position / (float) size)) * 100));
 
 					} else {
 						Log.d("TAG_ACTIVITY", "BREAKING FROM SONG");
@@ -1061,9 +1132,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 }
 
-// TODO: show song progress and move seek bar (READ ONLY)
-// TODO: implement seeking
-// TODO: Make decoding block other choose/random/play/everything calls
 // TODO: Maybe add a volume control to the AudioTrack bit, in case
 // the synth samples are too loud/soft in comparison to the AT.
 
