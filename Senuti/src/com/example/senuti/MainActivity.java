@@ -3,7 +3,6 @@ package com.example.senuti;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,7 +18,9 @@ import javazoom.jl.decoder.SampleBuffer;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -29,10 +30,12 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.example.MusicRetriever.MusicRetriever;
 import com.example.MusicRetriever.PrepareMusicRetrieverTask;
@@ -52,6 +55,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	int nextFrag;
 	BeatFragment beatPad;
 	PlayFragment playFrag;
+	boolean songReady = false;
 
 	// TODO:LOCK ORIENTATION
 
@@ -137,12 +141,80 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 	// /////
 
+	public void makeToast(String str) {
+		Context context = getApplicationContext();
+		CharSequence text = str;
+		int duration = Toast.LENGTH_LONG;
+
+		Toast toast = Toast.makeText(context, text, duration);
+		toast.show();
+	}
+
+	public String getRealPathFromURI(Context context, Uri contentUri) {
+		Cursor cursor = null;
+		try {
+			String[] proj = { MediaStore.Images.Media.DATA };
+			cursor = context.getContentResolver().query(contentUri, proj, null,
+					null, null);
+			int column_index = cursor
+					.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+			cursor.moveToFirst();
+			return cursor.getString(column_index);
+		} finally {
+			if (cursor != null) {
+				cursor.close();
+			}
+		}
+	}
+
 	void playSong(Uri uri) {
 		atp.playSong(uri);
 	}
 
+	public boolean checkSongReady() {
+		return songReady;
+	}
+
+	void setPlaying(final boolean playing) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				// This code will always run on the UI thread, therefore is safe
+				// to modify UI elements.
+				playFrag.setPlaying(playing);
+			}
+		});
+	}
+
+	void setSongTitle(final String title) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				// This code will always run on the UI thread, therefore is safe
+				// to modify UI elements.
+				playFrag.setSongTitle(title);
+			}
+		});
+	}
+
+	void setDecodeProgress(int prog) {
+		playFrag.setDecodeProgress(prog);
+	}
+
 	void setLoading(boolean loading) {
 		playFrag.setLoading(loading);
+	}
+
+	void enableReverseSwitch(boolean s) {
+		playFrag.enableReverseSwitch(s);
+	}
+
+	public boolean isPlaying() {
+		return atp.isPlaying();
+	}
+
+	void setPitchOffsetLabel(int amount) {
+		playFrag.setPitchOffsetLabel(amount);
 	}
 
 	// this method lets you switch fragments within one pane back and forth
@@ -188,9 +260,50 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		switch (requestCode) {
 		case ACTIVITY_CHOOSE_FILE: {
 			if (resultCode == RESULT_OK) {
+				Log.d("TAG_ACTIVITY", "CHECK1");
 				Uri uri = data.getData();
+				Log.d("TAG_ACTIVITY", "CHECK2");
 
-				atp.playSong(uri);
+				// now try to get the name of the mp3 file
+				String path = getRealPathFromURI(getApplicationContext(), uri);
+				int pos = path.lastIndexOf("/") + 1;
+				Log.d("TAG_ACTIVITY", "" + pos + " " + path);
+				if (pos == -1) {
+					Log.d("TAG_ACTIVITY", "NO /");
+					makeToast("Unable to open " + path);
+					return;
+				}
+				String filename = path.substring(pos, path.length());
+				if (filename.lastIndexOf(".") == -1) {
+					Log.d("TAG_ACTIVITY",
+							"NO . extension in filename, unable to open");
+					makeToast("Unable to open " + path);
+					return;
+				}
+				String[] splits = filename.split("\\.");
+				Log.d("TAG_ACTIVITY", splits[0]);
+				if (splits.length != 2) {
+					Log.d("TAG_ACTIVITY", "SPLITS != 2" + splits[0] + splits[1]);
+				} else {
+					Log.d("TAG_ACTIVITY", "CHECK5");
+					String extention = splits[1];
+					String mp3String = "mp3";
+					Log.d("TAG_ACTIVITY", "FILETYPE = " + extention);
+					if (!(extention.equals(mp3String))) {
+						// TODO: make this into a toast!
+						Log.d("TAG_ACTIVITY",
+								"INVALID FILE TYPE, TRY AGAIN, FILETYPE = "
+										+ extention);
+						makeToast("Please select a song in mp3 format");
+						return;
+					} else {
+						String songTitle = splits[0];
+
+						Log.d("TAG_ACTIVITY", "SONG TITLE = " + songTitle);
+						setSongTitle(songTitle);
+						atp.playSong(uri);
+					}
+				}
 			}
 		}
 		}
@@ -198,6 +311,9 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 	// launcher method to implement interface so UI can be put in fragment
 	public void setReverse(boolean dir) {
+		if (atp == null) {
+			return;
+		}
 		atp.setReverse(dir);
 	}
 
@@ -210,6 +326,9 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	}
 
 	public void setPitch(double sliderVal) {
+		if (atp == null) {
+			return;
+		}
 		atp.setPitch(sliderVal);
 	}
 
@@ -298,21 +417,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 									// function
 	}
 
-	// public static void writeByteArrayToFile(byte[] byteArray,
-	// FileOutputStream fos, BufferedOutputStream bos, int start, int end) {
-	// try {
-	// if (bos != null){
-	// bos.write(byteArray,start,end);
-	// }
-	// }
-	// }
-
 	public class AudioTrackPlayer {
-
-		// TODO: implement methods: initialize, play, pause, rewind, load,
-		// previous
-		// next, seek, destroy, status (return playing, pause, stopped,
-		// loading?)
 
 		AudioThread audioThread;
 
@@ -349,10 +454,16 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		}
 
 		public void setPitch(double p) {
+			if (audioThread == null) {
+				return;
+			}
 			audioThread.setPitchOffset(p);
 		}
 
 		public void setReverse(boolean r) {
+			if (audioThread == null) {
+				return;
+			}
 			audioThread.setReverse(r);
 		}
 
@@ -375,6 +486,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 		public void destroy() {
 			audioThread.clear();
 		};
+
+		public boolean isPlaying() {
+			return (!(audioThread.isPaused()));
+		}
 
 		public byte[] decode(InputStream inputStream, int startMs, int maxMs)
 				throws IOException {
@@ -444,8 +559,6 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				Log.d("TAG_ACTIVITY", "RANDOM SONG == NULL");
 				return;
 			} else {
-				// Async decode, set loading spinner, when done end spinner and
-				// call
 				// play audiotrack thread
 				DecodeMp3Thread task = new DecodeMp3Thread();
 				task.execute(song);
@@ -460,21 +573,65 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				audioThread = null;
 			}
 
-			Uri song = mRetriever.getRandomItem().getURI();
-			if (song == null) {
+			com.example.MusicRetriever.MusicRetriever.Item song = mRetriever
+					.getRandomItem();
+			Uri songUri = song.getURI();
+			Log.d("TAG_ACTIVITY", "SONG TITLE = " + song.getTitle());
+			if (songUri == null) {
 				Log.d("TAG_ACTIVITY", "RANDOM SONG == NULL");
 				return;
 			} else {
-				DecodeMp3Thread task = new DecodeMp3Thread();
-				task.execute(song);
+				// CHECK VALID FILE
+				// TODO: repeated code, put into function...
+				// now try to get the name of the mp3 file
+				String path = getRealPathFromURI(getApplicationContext(),
+						songUri);
+				int pos = path.lastIndexOf("/") + 1;
+				Log.d("TAG_ACTIVITY", "" + pos + " " + path);
+				if (pos == -1) {
+					Log.d("TAG_ACTIVITY", "NO /");
+					return;
+				}
+				String filename = path.substring(pos, path.length());
+				if (filename.lastIndexOf(".") == -1) {
+					Log.d("TAG_ACTIVITY",
+							"NO . extension in filename, unable to open");
+					return;
+				}
+				String[] splits = filename.split("\\.");
+				Log.d("TAG_ACTIVITY", splits[0]);
+				if (splits.length != 2) {
+					Log.d("TAG_ACTIVITY", "SPLITS != 2" + splits[0] + splits[1]);
+				} else {
+					Log.d("TAG_ACTIVITY", "CHECK5");
+					String extention = splits[1];
+					String mp3String = "mp3";
+					Log.d("TAG_ACTIVITY", "FILETYPE = " + extention);
+					if (!(extention.equals(mp3String))) {
+						// TODO: make this into a toast!
+						Log.d("TAG_ACTIVITY",
+								"INVALID FILE TYPE, TRY AGAIN, FILETYPE = "
+										+ extention);
+						makeToast("Please try again, 'random' chose a wav file...");
+						return;
+					} else {
+						Log.d("TAG_ACTIVITY", "SONG TITLE = " + song.getTitle());
+						setSongTitle(song.getTitle());
+						DecodeMp3Thread task = new DecodeMp3Thread();
+						task.execute(songUri);
+					}
+				}
+
 			}
 		}
 
-		private class DecodeMp3Thread extends AsyncTask<Uri, Void, String> {
+		private class DecodeMp3Thread extends AsyncTask<Uri, Integer, String> {
 
 			@Override
 			protected void onPreExecute() {
 				setLoading(true);
+				songReady = false;
+				enableReverseSwitch(false);
 			}
 
 			@Override
@@ -521,7 +678,15 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 				// decode and write to file
 				Log.d("TAG_ACTIVITY", mp3URI.toString());
+				int dataLength = 1;
+				try {
+					dataLength = data.available();
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
 
+				int progress = 0;
 				int ite = 44100;
 				try {
 					while (ite < data.available()) {
@@ -538,6 +703,8 @@ public class MainActivity extends Activity implements OnPreparedListener,
 										+ (output.length / 44100) * 1000);
 								Log.d("TAG_ACTIVITY",
 										"data length " + data.available());
+								progress += output.length;
+								publishProgress((int) ((float) progress / (float) dataLength) * 10);
 							} catch (IOException e) {
 								break;
 							}
@@ -576,6 +743,12 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 				// TODO: Use a thread in the background prepare the next song.
 				return path;
+			}
+
+			protected void onProgressUpdate(Integer... progress) {
+				Log.d("TAG_ACTIVITY", "progress = " + progress[0]);
+				setDecodeProgress(progress[0]);
+
 			}
 
 			@Override
@@ -635,7 +808,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			}
 
 			// max of the pitch offset (from 0%)
-			double MAX_OFFSET = 80000.0;
+			double MAX_OFFSET = 88200.0;
 
 			public void setPitchOffset(double p) {
 				if (p == 0.5)
@@ -644,7 +817,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					PITCHOFFSET = (int) ((0.5 - p) * -MAX_OFFSET);
 				else
 					PITCHOFFSET = (int) ((p - 0.5) * MAX_OFFSET);
-				Log.d("TAG_ACTIVITY", Integer.toString(PITCHOFFSET) + " PO");
+				// Log.d("TAG_ACTIVITY", Integer.toString(PITCHOFFSET) + " PO");
+				int offsetPercent = (int) (PITCHOFFSET / (MAX_OFFSET / 2) * 100);
+				setPitchOffsetLabel(offsetPercent);
+
 			}
 
 			public void setReverse(boolean r) {
@@ -750,26 +926,35 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				at.setPlaybackRate(44100 + PITCHOFFSET);
 				TRACKLENGTH = size;
 				boolean continuePlaying = true;
+
+				// NOW set songReady and enable clicking.. same thing?
+				songReady = true;
+				enableReverseSwitch(true);
+
 				while (continuePlaying) {
 					if (CLEAR) {
 						Log.d("TAG_ACTIVITY", "CLEAR");
 						at.stop();
 						at.release();
+						setPlaying(false);
 						return;
 					}
-					
+
 					if (!(position <= size && position >= 0)) {
 						PAUSED = true;
+						setPlaying(false);
 					}
 					// check paused
 					if (PAUSED) {
+						setPlaying(false);
 						continue;
 					}
 
 					try {
 						if (REVERSE) {
 							ra.seek(position); // IS COUNT = RET SIZE?
-							Log.d("TAG_ACTIVITY", Integer.toString(position));
+							// Log.d("TAG_ACTIVITY",
+							// Integer.toString(position));
 						}
 						ret = ra.read(byteData, 0, count);
 					} catch (IOException e) {
@@ -787,6 +972,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 
 						at.setPlaybackRate(44100 + PITCHOFFSET);
 						at.write(byteData, 0, ret);
+						setPlaying(true);
 						// Log.d("TAG_ACTIVITY", Integer.toString(position));
 
 					} else
@@ -801,109 +987,16 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				at.stop();
 				at.release();
 			}
-			// public void play2(com.example.MusicRetriever.MusicRetriever.Item
-			// TRACK) {
-			// //Play from byte array
-			//
-			//
-			// byte[] output = output2;
-			// TRACKLENGTH = output.length;
-			//
-			// at.play();
-			// Log.d("TAG_ACTIVITY", "2");
-			//
-			// boolean continuePlaying = true;
-			// while (continuePlaying) {
-			//
-			// if (!(position <= output.length && position >= 0)) {
-			// // reached end/beginning of song
-			// PAUSED = true;
-			// }
-			//
-			// // now we're playing, should do necessary checks for pause,
-			// // stop, rewind, modify, etc.
-			//
-			// // case where we want to kill the song completely and stop
-			// // the player
-			// if (CLEAR) {
-			// Log.d("TAG_ACTIVITY", "CLEAR");
-			// at.stop();
-			// at.release();
-			// return;
-			// }
-			//
-			// if (PAUSED) {
-			// at.pause();
-			// Log.d("TAG_ACTIVITY", "PAUSED");
-			// boolean stayPaused = true;
-			// while (stayPaused) {
-			// if (CLEAR) {
-			// at.stop();
-			// at.release();
-			// return;
-			// } else if (!(PAUSED)) {
-			// if (position <= 0 && !REVERSE) {
-			// stayPaused = false;
-			// position = 0;
-			// Log.d("TAG_ACTIVITY",
-			// "UNPAUSED, going forwards");
-			// } else if (position >= output.length && REVERSE) {
-			// stayPaused = false;
-			// position = output.length - count;
-			// Log.d("TAG_ACTIVITY",
-			// "UNPAUSED, going backwards");
-			// } else if (position >= 0
-			// && position <= output.length - count) {
-			// stayPaused = false;
-			// }
-			// } else {
-			// try {
-			// Thread.sleep(100);
-			// } catch (InterruptedException e) {
-			// e.printStackTrace();
-			// }
-			// }
-			// }
-			// at.play();
-			//
-			// }
-			// // TODO: if possible, don't read whole song into memory
-			// // // Write the byte array to the track
-			// at.setPlaybackRate(44100 + PITCHOFFSET);
-			// byte[] newArray;
-			// newArray = Arrays.copyOfRange(output, position, position
-			// + count);
-			// if (REVERSE) {
-			// reverseFrames(newArray);
-			// position -= count;
-			// } else {
-			// position += count;
-			// }
-			//
-			// clipAudio(newArray);
-			//
-			// at.write(newArray, 0, count);
-			// // playbackRate += 500;
-			//
-			// }
-			// at.stop();
-			// // at.flush();
-			// at.release();
-			// PLAYING = false;
-			// }
-
 		}
 	}
 }
 
-// TODO: Some sort of indicator for song speed i.e. normal, 1.3x...
-// TODO: Add current song info to player
-// TODO: Make play and pause one button
-// TODO: Add Play, Pause, Back, Forward icons.
-// TODO: Make sure the selected audio file is an MP3.
-// TODO: Make a waiting animation while the song is decoding.
+// TODO: show song progress and move seek bar (READ ONLY)
+// TODO: implement seeking
+// TODO: Make decoding block other choose/random/play/everything calls
 // TODO: Maybe add a volume control to the AudioTrack bit, in case
 // the synth samples are too loud/soft in comparison to the AT.
 
 // TODO: Maybe fix that decoding/saving to file blip..
 // TODO: Load next song in new thread
+// TODO: Make UI better.

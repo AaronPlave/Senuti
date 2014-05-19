@@ -15,6 +15,7 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.TextView;
 
 public class PlayFragment extends Fragment {
 
@@ -25,7 +26,9 @@ public class PlayFragment extends Fragment {
 	Switch atReverse;
 	SeekBar pitchSlider;
 	Button randomButton;
-	ProgressBar atLoadingSpinner;
+	ProgressBar atDecodeProgress;
+	TextView atPitchOffsetLabel;
+	TextView atTitle;
 
 	public interface PlayControllerListener {
 		public void setReverse(boolean d);
@@ -41,6 +44,11 @@ public class PlayFragment extends Fragment {
 		public void back();
 
 		public void chooseFileFromIntent();
+
+		public boolean checkSongReady();
+
+		public boolean isPlaying();
+
 	}
 
 	@Override
@@ -58,122 +66,134 @@ public class PlayFragment extends Fragment {
 	}
 
 	@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			
-			View rootView = inflater.inflate(R.layout.effects_layout, container, false);
-			
-			
-			randomButton = (Button) rootView.findViewById(R.id.btnRandom);
-			randomButton.setOnClickListener(new OnClickListener() {
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
 
-				@Override
-				public void onClick(View v) {
-					callBack.random();
-					// String songs = atp.getSongsOnDevice().toString();
+		View rootView = inflater.inflate(R.layout.effects_layout, container,
+				false);
 
-					// Log.d("TAG_ACTIVITY","END OF SONGS");
-				}
-			});
-			
-			
-			//Bind the decoding loading spinner
-			atLoadingSpinner = (ProgressBar) rootView.findViewById(R.id.decodingSpinner);
-			atLoadingSpinner.setVisibility(View.GONE);
-			
-			
-			// Bind play AT file
-			atPlay = (Button) rootView.findViewById(R.id.btnAudioTrackPlay);
-			atPlay.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
+		randomButton = (Button) rootView.findViewById(R.id.btnRandom);
+		randomButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				callBack.random();
+				// String songs = atp.getSongsOnDevice().toString();
+
+				// Log.d("TAG_ACTIVITY","END OF SONGS");
+			}
+		});
+
+		// Bind title
+		atTitle = (TextView) rootView.findViewById(R.id.songTitle);
+
+		// Bind pitch offset label
+		atPitchOffsetLabel = (TextView) rootView
+				.findViewById(R.id.pitchOffsetLabel);
+		atPitchOffsetLabel.setText("0%");
+
+		// Bind the decoding loading spinner
+		atDecodeProgress = (ProgressBar) rootView
+				.findViewById(R.id.atDecodeProgress);
+		atDecodeProgress.setVisibility(View.INVISIBLE);
+		
+
+		// Bind play/pause AT button
+		atPlay = (Button) rootView.findViewById(R.id.btnAudioTrackPlay);
+		atPlay.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (callBack.isPlaying()) {
+					callBack.pause();
+				} else {
 					callBack.play();
 				}
-			});
+			}
+		});
 
-			// Bind pause AT file
-			atPause = (Button) rootView.findViewById(R.id.btnAudioTrackPause);
-			atPause.setOnClickListener(new OnClickListener() {
+		// // Bind pause AT file
+		// atPause = (Button) rootView.findViewById(R.id.btnAudioTrackPause);
+		// atPause.setOnClickListener(new OnClickListener() {
+		// @Override
+		// public void onClick(View v) {
+		// callBack.pause();
+		// }
+		// });
+
+		// Bind backtrack AT file
+		atBack = (Button) rootView.findViewById(R.id.btnAudioTrackBack);
+		atBack.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// TODO: Add logic to determine whether or not to go back to
+				// previous song or
+				// go to beginning of song based on where in the song you
+				// currently are.
+				callBack.back();
+
+			}
+		});
+
+		// Bind the reverse toggle for AT
+		atReverse = (Switch) rootView.findViewById(R.id.toggleReverse);
+		// atReverse.setClickable(false);
+		// atReverse.setEnabled(false);
+
+		atReverse.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View view) {
+				// Is the toggle on?
+				boolean on = ((Switch) view).isChecked();
+				if (!(callBack.checkSongReady())) {
+					atReverse.setEnabled(false);
+					return;
+				}
+				if (on) {
+					callBack.setReverse(true);
+				} else {
+					callBack.setReverse(false);
+				}
+			}
+		});
+
+		// Bind the pitch slider for AT
+		pitchSlider = (SeekBar) rootView.findViewById(R.id.pitchSlider);
+		// create a listener for the slider bar;
+		OnSeekBarChangeListener listener = new OnSeekBarChangeListener() {
+			public void onStopTrackingTouch(SeekBar seekBar) {
+			}
+
+			public void onStartTrackingTouch(SeekBar seekBar) {
+			}
+
+			public void onProgressChanged(SeekBar seekBar, int progress,
+					boolean fromUser) {
+				if (fromUser) {
+					double sliderval;
+					Log.d("TAG_ACTIVITY", Integer.toString(progress));
+					sliderval = progress / (double) seekBar.getMax();
+					Log.d("TAG_ACTIVITY", Double.toString(sliderval));
+					callBack.setPitch(sliderval);
+
+				}
+			}
+		};
+
+		// set the listener on the slider
+		pitchSlider.setOnSeekBarChangeListener(listener);
+
+		Button btn = (Button) rootView.findViewById(R.id.btnChoose);
+		if (btn != null)
+			btn.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					callBack.pause();
+					callBack.chooseFileFromIntent();
 				}
 			});
-			
 
-			// Bind backtrack AT file
-			atBack = (Button) rootView.findViewById(R.id.btnAudioTrackBack);
-			atBack.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					// TODO: Add logic to determine whether or not to go back to
-					// previous song or
-					// go to beginning of song based on where in the song you
-					// currently are.
-					callBack.back();
-
-				}
-			});
-			
-			
-			// Bind the reverse toggle for AT
-			atReverse = (Switch) rootView.findViewById(R.id.toggleReverse);
-			atReverse.setOnClickListener(new OnClickListener() {
-
-				@Override
-				public void onClick(View view) {
-					// Is the toggle on?
-					boolean on = ((Switch) view).isChecked();
-
-					if (on) {
-						callBack.setReverse(true);
-					} else {
-						callBack.setReverse(false);
-					}
-				}
-			});
-			
-			
-			
-			// Bind the pitch slider for AT
-			pitchSlider = (SeekBar) rootView.findViewById(R.id.pitchSlider);
-			// create a listener for the slider bar;
-			OnSeekBarChangeListener listener = new OnSeekBarChangeListener() {
-				public void onStopTrackingTouch(SeekBar seekBar) {
-				}
-
-				public void onStartTrackingTouch(SeekBar seekBar) {
-				}
-
-				public void onProgressChanged(SeekBar seekBar, int progress,
-						boolean fromUser) {
-					if (fromUser) {
-						double sliderval;
-						Log.d("TAG_ACTIVITY", Integer.toString(progress));
-						sliderval = progress / (double) seekBar.getMax();
-						Log.d("TAG_ACTIVITY", Double.toString(sliderval));
-						callBack.setPitch(sliderval);
-
-					}
-				}
-			};
-
-	
-			
-	// set the listener on the slider
-	pitchSlider.setOnSeekBarChangeListener(listener);
-			
-	Button btn = (Button) rootView.findViewById(R.id.btnChoose);
-	if(btn!=null)
-	btn.setOnClickListener(new OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			callBack.chooseFileFromIntent();
-		}
-	});
-			
-			return rootView;
-		}
+		return rootView;
+	}
 
 	public void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -181,11 +201,37 @@ public class PlayFragment extends Fragment {
 		// Bind the random button click
 
 	}
-	public void setLoading(boolean loading){
-		if (loading){
-			atLoadingSpinner.setVisibility(View.VISIBLE);
+
+	public void setPlaying(boolean play) {
+		if (play) {
+			atPlay.setBackgroundResource(R.drawable.ic_action_pause);
 		} else {
-			atLoadingSpinner.setVisibility(View.GONE);
+			atPlay.setBackgroundResource(R.drawable.ic_action_play);
+		}
+	}
+
+	public void setSongTitle(String title) {
+		atTitle.setText(title);
+	}
+
+	public void setDecodeProgress(int prog) {
+		atDecodeProgress.setProgress(prog);
+	}
+
+	public void enableReverseSwitch(boolean s) {
+		atReverse.setClickable(s);
+	}
+
+	public void setPitchOffsetLabel(int amount) {
+		atPitchOffsetLabel.setText("Pitch Offset: " + amount + "%");
+	}
+
+	public void setLoading(boolean loading) {
+		if (loading) {
+			atDecodeProgress.setVisibility(View.VISIBLE);
+		} else {
+			atDecodeProgress.setVisibility(View.INVISIBLE);
+			atDecodeProgress.setProgress(0);
 		}
 	}
 

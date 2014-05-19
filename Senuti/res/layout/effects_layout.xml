@@ -1,75 +1,194 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <Button
-        android:id="@+id/btnAudioTrackBack"
-        android:layout_width="118dp"
-        android:layout_height="116dp"
-        android:layout_alignBottom="@+id/btnAudioTrackPause"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/btnAudioTrackPause"
-        android:text="@string/atBack" />
-    
-   <Button
-        android:id="@+id/btnChoose"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/btnAudioTrackPause"
-        android:layout_toRightOf="@+id/btnRandom"
-        android:text="@string/choose" />
-    
-
-    <Button
-        android:id="@+id/btnAudioTrackPlay"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:text="@string/atPlay" />
-
-    <Button
-        android:id="@+id/btnAudioTrackPause"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/btnAudioTrackPlay"
-        android:text="@string/atPause" />
-
-    <SeekBar
-        android:id="@+id/pitchSlider"
+    <LinearLayout
+        android:id="@+id/wrapper"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_centerVertical="true"
-        android:progress="50" />
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:orientation="vertical"
+        android:weightSum="1" >
+
+        <!-- SONG TITLE -->
+
+        <LinearLayout
+            android:id="@+id/LinearLayout02"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp" >
+
+            <TextView
+                android:id="@+id/songTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:text="CHoSe A sOnG!"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textColor="#ffffff" />
+        </LinearLayout>
+
+        <!-- Pitch Slider -->
+
+        <LinearLayout
+            android:id="@+id/LinearLayout03"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/pitchOffsetLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Pitch Offset: 0%"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="#ffffff" />
+
+            <SeekBar
+                android:id="@+id/pitchSlider"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:paddingBottom="10dp"
+                android:progress="50" />
+        </LinearLayout>
+
+        <!-- Reverse Toggle and Random Effects Checkbox -->
+
+        <LinearLayout
+            android:id="@+id/LinearLayout04"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="10dp" >
+
+            <Switch
+                android:id="@+id/toggleReverse"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <CheckBox
+                android:id="@+id/checkBox1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Random Effects" />
+        </LinearLayout>
+
+        <!-- Seek Bar -->
+
+        <LinearLayout
+            android:id="@+id/LinearLayout05"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <SeekBar
+                android:id="@+id/seekBar"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:padding="20dp"
+                android:progress="0" />
+        </LinearLayout>
+
+        <!-- Decoding loading progress bar -->
+
+        <LinearLayout
+            android:id="@+id/LinearLayout06"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <ProgressBar
+                android:id="@+id/atDecodeProgress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:progress="0"
+                android:visibility="visible" />
+
+        </LinearLayout>
+
+        <!-- Music Controls -->
+
+        <LinearLayout
+            android:id="@+id/LinearLayout07"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="72dp"
+            android:layout_gravity="center"
+            android:layout_weight="0.05"
+            android:gravity="center" >
+
+            <!-- Just change this to action_pause on PAUSE -->
+
+            <Button
+                android:id="@+id/btnAudioTrackBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ic_action_previous" />
+
+            <Button
+                android:id="@+id/btnAudioTrackPlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ic_action_play" />
+
+            <Button
+                android:id="@+id/btnForward"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ic_action_next" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/LinearLayout07"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.22" >
+
+            <Button
+                android:id="@+id/btnChoose"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose" />
+
+            <Button
+                android:id="@+id/btnRandom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Random" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!--
+        <Button
+       android:id="@+id/btnAudioTrackPause"
+       android:layout_width="154dp"
+       android:layout_height="100dp"
+       android:text="@string/atPause" />
+
+    
+
+   
 
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/toggleReverse"
-        android:layout_alignParentLeft="true"
         android:layout_marginBottom="34dp"
         android:text="@string/reverse" />
-
-    <Switch
-        android:id="@+id/toggleReverse"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/pitchSlider"
-        android:layout_marginTop="38dp" />
 
     <TextView
         android:id="@+id/textView1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/pitchSlider"
-        android:layout_alignRight="@+id/toggleReverse"
         android:layout_marginBottom="14dp"
         android:text="@string/pitch_control"
         android:textAppearance="?android:attr/textAppearanceMedium" />
@@ -78,16 +197,13 @@
         android:id="@+id/btnRandom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/btnAudioTrackPlay"
         android:text="@string/random" />
 
     <ProgressBar
         android:id="@+id/decodingSpinner"
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/toggleReverse"
-        android:layout_toRightOf="@+id/btnAudioTrackPause" />
+        android:layout_height="wrap_content" />
+    -->
 
-</RelativeLayout>
+</LinearLayout>
