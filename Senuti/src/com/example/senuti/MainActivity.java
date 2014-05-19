@@ -56,6 +56,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 	BeatFragment beatPad;
 	PlayFragment playFrag;
 	boolean songReady = false;
+	
 
 	// TODO:LOCK ORIENTATION
 
@@ -547,12 +548,22 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				throw new IOException("Decoder error: " + e);
 			}
 		}
-
+		
+		DecodeMp3Thread task;
+		
+		public boolean cancelDecode() {
+			return task.cancel(true);
+		}
+		
 		public void playSong(Uri song) {
 			// Check if audioThread is initialized
 			if (audioThread != null) {
 				audioThread.clear();
 				audioThread = null;
+			}
+			
+			if (task != null){
+				cancelDecode();
 			}
 
 			if (song == null) {
@@ -560,10 +571,11 @@ public class MainActivity extends Activity implements OnPreparedListener,
 				return;
 			} else {
 				// play audiotrack thread
-				DecodeMp3Thread task = new DecodeMp3Thread();
+				task = new DecodeMp3Thread();
 				task.execute(song);
 			}
 		}
+		
 
 		public void playRandomSong() {
 
@@ -571,6 +583,10 @@ public class MainActivity extends Activity implements OnPreparedListener,
 			if (audioThread != null) {
 				audioThread.clear();
 				audioThread = null;
+			}
+			
+			if (task != null){
+				cancelDecode();
 			}
 
 			com.example.MusicRetriever.MusicRetriever.Item song = mRetriever
@@ -617,7 +633,7 @@ public class MainActivity extends Activity implements OnPreparedListener,
 					} else {
 						Log.d("TAG_ACTIVITY", "SONG TITLE = " + song.getTitle());
 						setSongTitle(song.getTitle());
-						DecodeMp3Thread task = new DecodeMp3Thread();
+						task = new DecodeMp3Thread();
 						task.execute(songUri);
 					}
 				}

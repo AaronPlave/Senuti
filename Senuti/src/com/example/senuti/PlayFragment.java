@@ -90,7 +90,7 @@ public class PlayFragment extends Fragment {
 		// Bind pitch offset label
 		atPitchOffsetLabel = (TextView) rootView
 				.findViewById(R.id.pitchOffsetLabel);
-		atPitchOffsetLabel.setText("0%");
+		atPitchOffsetLabel.setText("Pitch Offset: 0%");
 
 		// Bind the decoding loading spinner
 		atDecodeProgress = (ProgressBar) rootView
